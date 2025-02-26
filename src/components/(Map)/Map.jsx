@@ -14,6 +14,7 @@ import {
 import countryCoordinates from "../../../public/data/countryCoordinates";
 import { useProducts } from "../../useContexts/ProductsContext";
 import { useSearch } from "../../useContexts/SearchContext";
+import Loading from "../common/Loading";
 
 const MapComponent = forwardRef(
   (
@@ -27,7 +28,7 @@ const MapComponent = forwardRef(
     },
     ref
   ) => {
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); 
     const [error, setError] = useState(null);
     const [locations, setLocations] = useState([]);
     const mapRef = useRef(null);
@@ -52,7 +53,14 @@ const MapComponent = forwardRef(
     }));
 
     useEffect(() => {
+      // Set loading state to true when starting to process locations, but only if we're not already loading products
+      if (!productsLoading) {
+        setLoading(true);
+      }
+      
       if (!productsLoading && !productsError) {
+        console.log("Processing product data for map...");
+        
         // Decide which products to display
         const productsToShow = 
           (filteredProductsList && filteredProductsList.length > 0) 
@@ -125,6 +133,15 @@ const MapComponent = forwardRef(
           setLocations([]);
         }
       }
+      
+      // Always ensure loading is set to false after processing
+      // Use a small timeout to ensure state updates have processed
+      const timer = setTimeout(() => {
+        setLoading(false);
+        console.log("Map loading complete, displaying markers");
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }, [allProducts, filteredProductsList, productsLoading, productsError]);
 
     useEffect(() => {
@@ -178,6 +195,15 @@ const MapComponent = forwardRef(
 
       return null;
     };
+
+    // Combined loading state for all data fetching operations
+    const isLoading = loading || productsLoading;
+    const loadingMessage = productsLoading ? 'Loading product data...' : 'Processing locations...';
+    
+    // Log the loading state for debugging
+    useEffect(() => {
+      console.log("Loading state:", { componentLoading: loading, productsLoading, isLoading });
+    }, [loading, productsLoading, isLoading]);
 
     const groupByCountry = (locations) => {
       return locations.reduce((acc, location) => {
@@ -493,7 +519,7 @@ const MapComponent = forwardRef(
           <TileLayer 
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" 
           />
-          {distributedLocations.length === 0 && (
+          {distributedLocations.length === 0 && !isLoading && (
             <div style={{
               position: 'absolute',
               top: '10px',
@@ -573,6 +599,9 @@ const MapComponent = forwardRef(
             );
           })}
         </MapContainer>
+        
+        {/* Overlay loading indicator when loading */}
+        {isLoading && <Loading message={loadingMessage} />}
         <style jsx global>{`
           .leaflet-popup {
             z-index: 9999 !important;

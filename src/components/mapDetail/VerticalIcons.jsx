@@ -5,7 +5,6 @@ import {
   IconButton,
   Drawer,
   List,
-  ListItem,
   useMediaQuery,
   useTheme,
   Tooltip,
@@ -17,7 +16,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useProducts } from "../../useContexts/ProductsContext";
 import { styled } from "@mui/material/styles";
 
-const StyledCircleIcon = styled(CircleIcon)(({ theme, selected }) => ({
+const StyledCircleIcon = styled(CircleIcon)(({ selected }) => ({
   fontSize: "12px",
   transition: "all 0.3s ease",
   color: selected ? "#00897B" : "#B2DFDB",
@@ -27,7 +26,7 @@ const StyledCircleIcon = styled(CircleIcon)(({ theme, selected }) => ({
   },
 }));
 
-const CategoryButton = styled(Box)(({ theme, selected }) => ({
+const CategoryButton = styled(Box)(({ selected }) => ({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -65,8 +64,7 @@ const VerticalIcons = ({
   categories,
   setSelectedSidebar,
 }) => {
-  const [selected, setSelected] = useState("");
-  const { allProducts, loading, error } = useProducts();
+  const { loading, error, allProducts } = useProducts();
   const [errorState, setErrorState] = useState("");
   const [topCategories, setTopCategories] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -85,24 +83,24 @@ const VerticalIcons = ({
   }, []);
 
   useEffect(() => {
-    if (!loading && !error && allProducts) {
+    if (!loading && !error) {
       try {
         const allCategories = Array.from(
           new Set(
-            allProducts.flatMap((item) =>
+            allProducts?.flatMap((item) =>
               (item.category_name || item.classific || "Uncategorized")
                 .split(" / ")
                 .map((category) => category.trim())
-            )
+            ) || []
           )
         );
-        setCategories(allCategories);
-      } catch (err) {
-        console.error("Error processing categories:", err);
+        setCategories([...allCategories]);
+      } catch (e) {
+        console.error("Error processing categories:", e);
         setErrorState("Error processing categories");
       }
     }
-  }, [allProducts, loading, error, setCategories]);
+  }, [loading, error, allProducts, setCategories]);
 
   useEffect(() => {
     if (categories.length > 0) {
@@ -112,7 +110,6 @@ const VerticalIcons = ({
   }, [categories, findTopCategories]);
 
   const handleCategoryClick = (label) => {
-    setSelected(label);
     setSelectedCategory(label);
     if (isMobile) {
       handleDrawerToggle();

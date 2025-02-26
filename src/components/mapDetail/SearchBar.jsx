@@ -39,7 +39,7 @@ const SearchBar = ({ mapRef }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const { allProducts, setSelectedProduct } = useProducts();
+  const { setSelectedProduct } = useProducts();
   const {
     searchResults,
     setSearchQuery: setContextSearchQuery,
@@ -140,12 +140,12 @@ const SearchBar = ({ mapRef }) => {
 
   // Calculate items per page
   const itemsPerPage = 5;
-  const startIndex = (page - 1) * itemsPerPage;
-  const currentProducts = Array.isArray(filteredProducts) &&
-    filteredProducts.length > 0
-    ? filteredProducts.slice(startIndex, startIndex + itemsPerPage)
-    : [];
-  const totalPages = Math.ceil((filteredProducts?.length || 0) / itemsPerPage);
+  // const startIndex = (page - 1) * itemsPerPage;
+  // const currentProducts = Array.isArray(filteredProducts) &&
+  //   filteredProducts.length > 0
+  //   ? filteredProducts.slice(startIndex, startIndex + itemsPerPage)
+  //   : [];
+  // const totalPages = Math.ceil((filteredProducts?.length || 0) / itemsPerPage);
 
   return (
     <Box
@@ -210,7 +210,7 @@ const SearchBar = ({ mapRef }) => {
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <Tooltip title="Search only shows products from the regular products API. Search matches the first letter after 'zehnder-' in product names. Example: 's' will match 'zehnder-subway'">
+                  <Tooltip title="Search only shows products from the regular products API. Search matches the first letter after 'zehnder-' in product names. Example: &quot;l&quot; will find &quot;zehnder-luna&quot;">
                     <HelpOutlineIcon
                       sx={{
                         color: "#00897B",
@@ -315,7 +315,7 @@ const SearchBar = ({ mapRef }) => {
                     <span style={{ fontSize: '12px', marginTop: '8px', display: 'block' }}>
                       For zehnder products, type a letter that appears after "zehnder-".
                       <br />
-                      Example: "l" will find "zehnder-luna"
+                      Example: &quot;l&quot; will find &quot;zehnder-luna&quot;
                     </span>
                   </Typography>
                 )}

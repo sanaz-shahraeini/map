@@ -15,7 +15,7 @@ const FilteredInfoSection = ({
         padding: 2,
         bgcolor: "#fbfbfb",
         mt: 2,
-        width: "118%",
+        width: "128%",
         marginLeft: { xs: "-1%", md: "6%" },
       }}
     >

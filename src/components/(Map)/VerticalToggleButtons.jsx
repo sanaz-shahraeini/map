@@ -71,7 +71,7 @@ export default function VerticalToggleButtons({
         navigator.share({
           title: subject,
           text: body,
-          url: window.location.href, // Include current URL
+          url: document.location.href, // Include current URL
         })
         .then(() => {
           console.log('Successfully shared');
@@ -95,19 +95,23 @@ export default function VerticalToggleButtons({
     if (!isClient || !selectedProduct) return;
     
     try {
-      const url = new URL(window.location.href);
-      const productName = selectedProduct.product_name || selectedProduct.name || '';
-      url.searchParams.set('product', productName);
-      
-      copyToClipboard(url.toString())
-        .then(() => {
-          alert('Product URL copied to clipboard!');
-          setOpenShareDialog(false);
-        })
-        .catch(err => {
-          console.error('Failed to copy URL: ', err);
-          alert('Unable to copy URL. Please try again.');
-        });
+      // Only execute this code on the client side
+      if (typeof document !== 'undefined') {
+        const currentUrl = document.location.href;
+        const baseUrl = new URL(currentUrl);
+        const productName = selectedProduct.product_name || selectedProduct.name || '';
+        baseUrl.searchParams.set('product', productName);
+        
+        copyToClipboard(baseUrl.toString())
+          .then(() => {
+            alert('Product URL copied to clipboard!');
+            setOpenShareDialog(false);
+          })
+          .catch(err => {
+            console.error('Failed to copy URL: ', err);
+            alert('Unable to copy URL. Please try again.');
+          });
+      }
     } catch (error) {
       console.error('Error generating URL:', error);
       alert('Failed to generate shareable URL.');
@@ -214,10 +218,18 @@ export default function VerticalToggleButtons({
       `Image Link: ${selectedProduct.image_url || ''}\n\n` +
       `Best regards`;
 
-    if (typeof window !== 'undefined') {
-      window.location.href = `mailto:?subject=${encodeURIComponent(
+    // Use a client-side only approach
+    if (typeof document !== 'undefined') {
+      const mailtoLink = `mailto:?subject=${encodeURIComponent(
         subject
       )}&body=${encodeURIComponent(body)}`;
+      
+      // Create a temporary link element and click it
+      const link = document.createElement('a');
+      link.href = mailtoLink;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
     
     setOpenShareDialog(false);

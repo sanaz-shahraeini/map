@@ -11,7 +11,6 @@ export function SearchProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const { regularProducts, allProducts } = useProducts();
 
-  // Filter products when searchQuery or regularProducts change
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -21,68 +20,118 @@ export function SearchProvider({ children }) {
     const lowerCaseQuery = searchQuery.toLowerCase().trim();
     setIsLoading(true);
 
-    // Log the search query for debugging
     console.log('Searching for:', lowerCaseQuery);
-    console.log('Available products count:', regularProducts.length);
+    console.log('Available products:', regularProducts.length);
 
-    // Filter products based on search query, only from the products API
     const filtered = regularProducts.filter((product) => {
-      // Get product name, ensuring it exists
       const productName = (product.product_name || product.name || "").toLowerCase();
       
-      // For zehnder products, extract the part after "zehnder-"
+      // Special case for zehnder-basic-silent-wall-fan
+      if (lowerCaseQuery === "zehnder-basic-silent-wall-fan" ||
+          lowerCaseQuery === "silent wall fan" ||
+          lowerCaseQuery === "wall fan") {
+        return productName.includes("zehnder") && 
+               (productName.includes("silent") || productName.includes("wall-fan"));
+      }
+      
+      // For zehnder products, check the part after "zehnder-"
       if (productName.includes("zehnder-")) {
-        const zehnderIndex = productName.indexOf("zehnder-") + 8;
+        // If searching explicitly for a zehnder product
+        if (lowerCaseQuery.includes("zehnder-")) {
+          // Compare full product names
+          return productName.includes(lowerCaseQuery);
+        }
         
-        // Check if there's any content after "zehnder-"
+        // Otherwise, check if the part after prefix matches
+        const zehnderIndex = productName.indexOf("zehnder-") + 8;
         if (zehnderIndex < productName.length) {
           const afterPrefix = productName.substring(zehnderIndex);
           
-          // Check if the first character of the part after "zehnder-" matches the first character of the query
-          if (lowerCaseQuery.length > 0 && afterPrefix.length > 0) {
-            return afterPrefix.charAt(0) === lowerCaseQuery.charAt(0);
+          // Check for part matches (more flexible matching)
+          const queryParts = lowerCaseQuery.split(' ');
+          for (const part of queryParts) {
+            if (part.length > 2 && afterPrefix.includes(part)) {
+              return true;
+            }
           }
+          
+          // Fallback to first character match
+          return lowerCaseQuery.length > 0 && afterPrefix.charAt(0) === lowerCaseQuery.charAt(0);
         }
         return false;
       }
       
-      // For non-zehnder products, check if the first character matches the query's first character
-      if (productName.length > 0 && lowerCaseQuery.length > 0) {
-        return productName.charAt(0) === lowerCaseQuery.charAt(0);
-      }
-      
-      return false;
+      // For non-zehnder products, check first character
+      return productName.length > 0 && 
+             lowerCaseQuery.length > 0 && 
+             productName.charAt(0) === lowerCaseQuery.charAt(0);
     });
 
-    console.log('Filtered results count:', filtered.length);
-    
-    // Enhance search results with coordinates from allProducts
+    console.log('Filtered results:', filtered.length);
+
+    // Enhance search results with coordinates
     const enhancedResults = filtered.map(product => {
-      // Try to find this product in allProducts which has coordinates
-      const productWithCoords = allProducts.find(p => 
+      // Find matching product in allProducts
+      let fullProduct = allProducts.find(p => 
         (p.id === product.id) || 
-        (p.product_name === product.product_name) ||
-        (p.name === product.name)
+        ((p.product_name || p.name || '').toLowerCase() === (product.product_name || product.name || '').toLowerCase())
       );
       
-      // If found, merge the properties
-      if (productWithCoords) {
+      // If direct match fails, try matching zehnder products with similar names
+      if (!fullProduct && (product.product_name || product.name || '').toLowerCase().includes('zehnder-')) {
+        const productName = (product.product_name || product.name || '').toLowerCase();
+        
+        // Special handling for zehnder-basic-silent-wall-fan
+        if (productName === 'zehnder-basic-silent-wall-fan') {
+          console.log('Looking for match for zehnder-basic-silent-wall-fan');
+          
+          fullProduct = allProducts.find(p => {
+            const pName = (p.product_name || p.name || '').toLowerCase();
+            return pName.includes('zehnder') && 
+                   (pName.includes('silent-wall') || 
+                    pName.includes('basic-silent') ||
+                    pName.includes('wall-fan'));
+          });
+        }
+        
+        // If still no match, try partial matching for other zehnder products
+        if (!fullProduct) {
+          const nameWithoutPrefix = productName.split('zehnder-')[1];
+          const nameParts = nameWithoutPrefix.split('-');
+          
+          fullProduct = allProducts.find(p => {
+            const pName = (p.product_name || p.name || '').toLowerCase();
+            if (!pName.includes('zehnder-')) return false;
+            
+            const pNameWithoutPrefix = pName.split('zehnder-')[1];
+            const pNameParts = pNameWithoutPrefix.split('-');
+            
+            // Check for at least 50% matching parts
+            let matchingParts = 0;
+            for (const part of nameParts) {
+              if (pNameParts.includes(part)) {
+                matchingParts++;
+              }
+            }
+            
+            return (matchingParts / nameParts.length) >= 0.5;
+          });
+        }
+      }
+      
+      if (fullProduct) {
+        console.log(`Enhanced product match: "${product.product_name || product.name}" with "${fullProduct.product_name || fullProduct.name}"`);
         return {
           ...product,
-          lat: productWithCoords.lat,
-          lng: productWithCoords.lng,
-          geo: productWithCoords.geo,
-          geoMapped: productWithCoords.geoMapped,
-          country: productWithCoords.country
+          ...fullProduct, // Merge all properties
+          product_name: product.product_name || product.name || fullProduct.product_name || fullProduct.name,
         };
       }
       
       return product;
     });
-    
-    // Log results with coordinates for debugging
-    const withCoords = enhancedResults.filter(p => p.lat && p.lng);
-    console.log(`Search results with coordinates: ${withCoords.length}/${enhancedResults.length}`);
+
+    console.log('Enhanced results:', enhancedResults.length);
     
     setSearchResults(enhancedResults);
     setIsLoading(false);

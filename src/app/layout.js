@@ -36,16 +36,16 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "../theme"
 import "./globals.css";
-import "./css/colors.css";
+import "../css/colors.css";
 import { Roboto } from "next/font/google";
-import { ProductsProvider } from "./useContexts/ProductsContext"; // وارد کردن ProductsProvider
-import { SearchProvider } from "./useContexts/SearchContext"; // وارد کردن SearchProvider
+import { ProductsProvider } from "../useContexts/ProductsContext"; // وارد کردن ProductsProvider
+import { SearchProvider } from "../useContexts/SearchContext"; // وارد کردن SearchProvider
 
-// const roboto = Roboto({
-//   weight: ["300", "400", "500", "700"],
-//   subsets: ["latin"],
-//   display: "swap",
-// });
+const roboto = Roboto({
+  weight: ["300", "400", "500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export default function RootLayout(props) {
   return (

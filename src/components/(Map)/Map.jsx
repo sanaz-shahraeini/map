@@ -235,26 +235,78 @@ const MapComponent = forwardRef(
     const getFilteredLocations = () => {
       console.log('Total locations before filtering:', locations.length);
       console.log('Filtered products from search:', filteredProducts.length);
-      console.log('Filtered Products:', filteredProducts);
-      console.log('Available Locations:', locations);
+      console.log('Selected Product:', selectedProductContext);
+
+      // Early return if no locations
+      if (!locations || locations.length === 0) {
+        console.log('No locations available');
+        return [];
+      }
 
       const filtered = locations.filter((location) => {
-        console.log('Checking location:', location.product);
-        // Handle search results filtering
-        if (filteredProducts && filteredProducts.length > 0) {
-          // Use more flexible matching for search results
-          const matchesSearch = filteredProducts.some(product => {
-            const productName = product.product_name || product.name || '';
-            console.log('Checking against product:', productName);
-            // Check if the location matches the product name
-            const isMatch = location.product === productName;
-            console.log(`Match found: ${isMatch}`);
-            return isMatch;
-          });
-          return matchesSearch;
+        // Skip undefined or null locations
+        if (!location || !location.product) {
+          return false;
         }
 
-        // Other filters for when search is not active
+        // If we have filtered products from search, use those
+        if (filteredProducts && filteredProducts.length > 0) {
+          return filteredProducts.some(product => {
+            const productName = product.product_name || product.name || '';
+            const locationProduct = location.product || '';
+            
+            // Direct match
+            if (productName === locationProduct) {
+              console.log(`Product match found: "${productName}" === "${locationProduct}"`);
+              return true;
+            }
+            
+            // Special case for zehnder-basic-silent-wall-fan
+            if (productName === "zehnder-basic-silent-wall-fan") {
+              // Look for related names
+              if (locationProduct.includes("silent-wall") || 
+                  locationProduct.includes("basic-silent") || 
+                  locationProduct.includes("wall-fan")) {
+                console.log(`Special match found for zehnder-basic-silent-wall-fan: "${locationProduct}"`);
+                return true;
+              }
+            }
+            
+            // Handle Zehnder products
+            if (productName.toLowerCase().includes('zehnder-') && 
+                locationProduct.toLowerCase().includes('zehnder-')) {
+              const productNameWithoutPrefix = productName.toLowerCase().split('zehnder-')[1];
+              const locationNameWithoutPrefix = locationProduct.toLowerCase().split('zehnder-')[1];
+              
+              // Check if product name parts match the location product name parts
+              const productNameParts = productNameWithoutPrefix.split('-');
+              const locationNameParts = locationNameWithoutPrefix.split('-');
+              
+              // Check for at least 50% matching parts
+              let matchingParts = 0;
+              for (const part of productNameParts) {
+                if (locationNameParts.includes(part)) {
+                  matchingParts++;
+                }
+              }
+              
+              const matchRatio = matchingParts / productNameParts.length;
+              if (matchRatio >= 0.5) {
+                console.log(`Zehnder partial match found: "${productName}" ~= "${locationProduct}" (${Math.round(matchRatio * 100)}% match)`);
+                return true;
+              }
+              
+              if (productNameWithoutPrefix === locationNameWithoutPrefix) {
+                console.log(`Zehnder exact match found: "${productName}" === "${locationProduct}" (without prefix)`);
+                return true;
+              }
+            }
+            
+            return false;
+          });
+        }
+
+        // If no filtered products, apply other filters
         const countryMatch =
           selectedCountry === "all" ||
           !selectedCountry ||
@@ -284,6 +336,12 @@ const MapComponent = forwardRef(
       });
 
       console.log('Filtered locations:', filtered.length);
+      if (filtered.length === 0) {
+        console.log('No locations matched the filters');
+      } else {
+        console.log('Sample filtered location:', filtered[0]);
+      }
+
       return filtered;
     };
 
@@ -317,15 +375,35 @@ const MapComponent = forwardRef(
         const selectedName = selectedProductContext.product_name || selectedProductContext.name;
         console.log("Selected product:", selectedName, selectedProductContext);
         
-        // Try multiple approaches to find the matching location
+        // Try to find matching location
         let matchedLocation = null;
         
-        // Method 1: Exact match on product name
-        matchedLocation = locations.find(loc => 
-          loc.product === selectedName
-        );
+        // Special handling for zehnder-basic-silent-wall-fan
+        if (selectedName === "zehnder-basic-silent-wall-fan") {
+          console.log("Special handling for zehnder-basic-silent-wall-fan");
+          
+          // Try to find any locations with similar names
+          matchedLocation = locations.find(loc => 
+            loc.product && (
+              loc.product.includes("silent-wall") ||
+              loc.product.includes("basic-silent") ||
+              loc.product.includes("wall-fan")
+            )
+          );
+          
+          if (matchedLocation) {
+            console.log("Found similar product:", matchedLocation.product);
+          }
+        }
         
-        // Method 2: If not found, try case-insensitive match
+        // If no special match found, try normal matching
+        if (!matchedLocation) {
+          matchedLocation = locations.find(loc => 
+            loc.product === selectedName
+          );
+        }
+        
+        // If still no match, try case-insensitive
         if (!matchedLocation) {
           const lowerName = selectedName.toLowerCase();
           matchedLocation = locations.find(loc => 
@@ -333,70 +411,36 @@ const MapComponent = forwardRef(
           );
         }
         
-        // Method 3: If still not found, try partial match (contains)
-        if (!matchedLocation) {
-          const lowerName = selectedName.toLowerCase();
-          matchedLocation = locations.find(loc => 
-            (loc.product || '').toLowerCase().includes(lowerName) ||
-            lowerName.includes((loc.product || '').toLowerCase())
-          );
-        }
-        
-        // Method 4: If still not found, try matching by ID
-        if (!matchedLocation && selectedProductContext.id) {
-          matchedLocation = locations.find(loc => 
-            loc.productId === selectedProductContext.id
-          );
-        }
-        
         if (matchedLocation) {
-          console.log("Found matching location for selected product:", matchedLocation);
+          console.log("Found matching location:", matchedLocation);
+          setSelectedLocation(matchedLocation);
           
-          // Ensure the location has valid coordinates
-          if (matchedLocation.lat && matchedLocation.lng) {
-            setSelectedLocation(matchedLocation);
-            
-            // Center map on the selected location
-            if (mapRef.current) {
-              console.log("Centering map on:", [matchedLocation.lat, matchedLocation.lng]);
-              mapRef.current.setView(
-                [matchedLocation.lat, matchedLocation.lng],
-                8 // Zoom level
-              );
-              
-              // Force a map redraw
-              setTimeout(() => {
-                mapRef.current.invalidateSize();
-              }, 100);
-            }
-          } else {
-            console.warn("Selected location has invalid coordinates:", matchedLocation);
+          // Center map on the location
+          if (mapRef.current) {
+            mapRef.current.setView(
+              [matchedLocation.lat, matchedLocation.lng],
+              8 // Zoom level
+            );
           }
         } else {
-          console.warn("No matching location found for selected product:", selectedName);
-          console.log("Available locations (first 3):", locations.slice(0, 3));
+          console.warn("No matching location found for:", selectedName);
           
-          // If we can't find a location match but the product has coords, use those directly
+          // Use product's own coordinates if available
           if (selectedProductContext.lat && selectedProductContext.lng) {
-            console.log("Using product's own coordinates");
             const newLocation = {
               lat: parseFloat(selectedProductContext.lat),
               lng: parseFloat(selectedProductContext.lng),
               product: selectedName,
               country: selectedProductContext.country || "Unknown",
-              description: selectedProductContext.description || "",
-              isEpd: selectedProductContext.type === "EPD" ? "EPD" : null,
-              productId: selectedProductContext.id
+              description: selectedProductContext.description || ""
             };
             
             setSelectedLocation(newLocation);
             
-            // Center the map
             if (mapRef.current) {
-              console.log("Centering map on product coordinates:", [newLocation.lat, newLocation.lng]);
               mapRef.current.setView(
                 [newLocation.lat, newLocation.lng],
-                8 // Zoom level
+                8
               );
             }
           } else {

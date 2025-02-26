@@ -1,4 +1,7 @@
+"use client";
+
 import * as React from "react";
+import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import ShareIcon from "@mui/icons-material/Share";
@@ -15,8 +18,13 @@ export default function VerticalToggleButtons({
   selectedProduct,
   setShowInfoCard,
 }) {
-  const [view, setView] = React.useState("list");
+  const [view, setView] = useState("list");
+  const [isClient, setIsClient] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleChange = (event, nextView) => {
     setView(nextView);
@@ -30,29 +38,24 @@ export default function VerticalToggleButtons({
     setMapZoom((prevZoom) => prevZoom + 1);
   };
 
-  // Function to share product information
   const handleShareProduct = () => {
-    if (typeof window === "undefined") {
-      return; // Skip on server-side rendering
-    }
+    if (!isClient) return;
 
     if (selectedProduct) {
-      const subject = `Product Information: ${selectedProduct.name}`;
+      const productName = selectedProduct.product_name || selectedProduct.name || '';
+      const subject = `Product Information: ${productName}`;
       const body =
         `Hello,\n\nI am sharing the information of the product I viewed:\n\n` +
-        `Product Name: ${selectedProduct.name}\n` +
-        `Description: ${selectedProduct.description}\n` +
-        `Image Link: ${selectedProduct.image_url}\n\n` +
+        `Product Name: ${productName}\n` +
+        `Description: ${selectedProduct.description || ''}\n` +
+        `Image Link: ${selectedProduct.image_url || ''}\n\n` +
         `Best regards`;
 
-      // Open email link with information
       window.location.href = `mailto:?subject=${encodeURIComponent(
         subject
       )}&body=${encodeURIComponent(body)}`;
     } else {
-      if (typeof window !== "undefined") {
-        alert("No product selected for sharing.");
-      }
+      alert("No product selected for sharing.");
     }
   };
 
@@ -64,6 +67,8 @@ export default function VerticalToggleButtons({
     { value: "settings", icon: <SettingsIcon /> },
     { value: "help", icon: <HelpIcon /> },
   ];
+
+  if (!isClient) return null;
 
   return (
     <ToggleButtonGroup

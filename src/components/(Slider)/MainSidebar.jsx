@@ -10,6 +10,7 @@ import {
   Typography,
   Select,
   MenuItem,
+  Skeleton,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Sidebar from "./Sidebar";
@@ -34,10 +35,12 @@ const MainSidebar = ({
   const [error, setError] = useState();
   const [filteredExtraInfo, setFilteredExtraInfo] = useState([]);
   const [showLastProduct, setShowLastProduct] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch products data
   useEffect(() => {
     const fetchProducts = async () => {
+      setIsLoading(true);
       try {
         const [response1, response2] = await Promise.all([
           fetch("https://epd-fullstack-project.vercel.app/api/products/"),
@@ -60,24 +63,27 @@ const MainSidebar = ({
           name: item.product_name || item.name || "No name specified",
           industry_solution:
             item.industry_solution || item.type || "No solution specified",
+          image_url: item.image_url || null,
         }));
 
         setProducts(formattedProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
         setError("Error fetching products");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchProducts();
   }, []);
 
-  // حذف فیلتر خاص
+  // Remove a specific filter
   const handleRemoveInfo = (index) => {
     setFilteredExtraInfo((prevInfo) => prevInfo.filter((_, i) => i !== index));
   };
 
-  // حذف آخرین محصول
+  // Remove last product
   const handleRemoveLastProduct = () => {
     setShowLastProduct(false);
   };
@@ -113,6 +119,13 @@ const MainSidebar = ({
     const productCategories = (product.category_name || "").split(" / ");
     return productCategories.includes(selectedCategory);
   });
+
+  // Function to handle image errors
+  const handleImageError = (e) => {
+    e.target.onerror = null;
+    e.target.style.display = 'none';
+    e.target.parentNode.querySelector('.fallback-icon').style.display = 'flex';
+  };
 
   return (
     <>
@@ -221,52 +234,108 @@ const MainSidebar = ({
         <Box sx={{ overflowY: "auto", flexGrow: 1, padding: 2 }}>
           {selected === "Products" ? (
             <List>
-              {filteredProducts.map((product, index) => (
-                <React.Fragment key={`Product${index}`}>
-                  <ListItem
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      backgroundColor: "#ffffff",
-                      px: 2,
-                      py: 0.5,
-                      cursor: "pointer",
-                    }}
-                    onClick={() => handleProductClick(product)}
-                  >
-                    <Box
+              {isLoading ? (
+                // Display skeletons while loading
+                Array.from(new Array(6)).map((_, index) => (
+                  <ListItem key={`skeleton-${index}`} sx={{ py: 1 }}>
+                    <Skeleton variant="rectangular" width={60} height={60} sx={{ mr: 2 }} />
+                    <Box sx={{ width: '100%' }}>
+                      <Skeleton width="70%" height={24} />
+                      <Skeleton width="40%" height={20} />
+                    </Box>
+                  </ListItem>
+                ))
+              ) : filteredProducts.length > 0 ? (
+                filteredProducts.map((product, index) => (
+                  <React.Fragment key={`Product${index}`}>
+                    <ListItem
                       sx={{
-                        width: "55px",
-                        height: "50px",
-                        backgroundColor: "#f0f0f0",
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        marginRight: "16px",
+                        backgroundColor: "#ffffff",
+                        px: 2,
+                        py: 0.5,
+                        cursor: "pointer",
                       }}
+                      onClick={() => handleProductClick(product)}
                     >
-                      <ImageIcon sx={{ color: "#656959", fontSize: "35px" }} />
-                    </Box>
-
-                    <Box sx={{ flexGrow: 1 }}>
-                      <ListItemText
-                        primary={product.name}
-                        secondary={product.industry_solution}
-                        secondaryTypographyProps={{
-                          sx: { color: "#666", fontSize: "14px" },
+                      <Box
+                        sx={{
+                          width: "65px",
+                          height: "60px",
+                          backgroundColor: "#f7f7f7",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginRight: "16px",
+                          borderRadius: "8px",
+                          overflow: "hidden",
+                          position: "relative",
                         }}
-                      />
-                    </Box>
+                      >
+                        {product.image_url ? (
+                          <>
+                            <Box
+                              component="img"
+                              src={product.image_url}
+                              alt={product.name}
+                              onError={handleImageError}
+                              sx={{
+                                maxWidth: "100%",
+                                maxHeight: "100%",
+                                objectFit: "contain",
+                              }}
+                            />
+                            <Box 
+                              className="fallback-icon"
+                              sx={{ 
+                                display: 'none',
+                                position: 'absolute',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '100%',
+                                height: '100%'
+                              }}
+                            >
+                              <ImageIcon sx={{ color: "#656959", fontSize: "35px" }} />
+                            </Box>
+                          </>
+                        ) : (
+                          <ImageIcon sx={{ color: "#656959", fontSize: "35px" }} />
+                        )}
+                      </Box>
 
-                    <IconButton size="small" sx={{ ml: "auto" }}>
-                      <InfoOutlinedIcon sx={{ color: "#4DB6AC" }} />
-                    </IconButton>
-                  </ListItem>
-                  {index < filteredProducts.length - 1 && (
-                    <Divider sx={{ width: "100%", bgcolor: "#e0e0e0" }} />
-                  )}
-                </React.Fragment>
-              ))}
+                      <Box sx={{ flexGrow: 1 }}>
+                        <ListItemText
+                          primary={product.name}
+                          secondary={product.industry_solution}
+                          primaryTypographyProps={{
+                            sx: { 
+                              fontWeight: 500,
+                              color: '#424242', 
+                              fontSize: '15px'
+                            }
+                          }}
+                          secondaryTypographyProps={{
+                            sx: { color: "#666", fontSize: "14px" },
+                          }}
+                        />
+                      </Box>
+
+                      <IconButton size="small" sx={{ ml: "auto" }}>
+                        <InfoOutlinedIcon sx={{ color: "#4DB6AC" }} />
+                      </IconButton>
+                    </ListItem>
+                    {index < filteredProducts.length - 1 && (
+                      <Divider sx={{ width: "100%", bgcolor: "#e0e0e0" }} />
+                    )}
+                  </React.Fragment>
+                ))
+              ) : (
+                <Typography variant="body1" sx={{ p: 2, color: '#666' }}>
+                  No products found for this category.
+                </Typography>
+              )}
             </List>
           ) : (
             <Sidebar

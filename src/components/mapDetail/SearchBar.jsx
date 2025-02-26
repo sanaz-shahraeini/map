@@ -44,6 +44,7 @@ const SearchBar = ({ mapRef }) => {
     searchResults,
     setSearchQuery: setContextSearchQuery,
     isLoading,
+    markerSelected,
   } = useSearch();
 
   const filteredProducts = searchResults || [];
@@ -156,7 +157,8 @@ const SearchBar = ({ mapRef }) => {
         width: "100%",
         position: "fixed",
         top: isMobile ? 0 : 100,
-        zIndex: 900,
+        zIndex: markerSelected ? 500 : 900,
+        transition: "z-index 0.1s ease",
       }}
     >
       <Grid

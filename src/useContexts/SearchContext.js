@@ -9,6 +9,7 @@ export function SearchProvider({ children }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [markerSelected, setMarkerSelected] = useState(false);
   const { regularProducts, allProducts } = useProducts();
 
   useEffect(() => {
@@ -141,9 +142,9 @@ export function SearchProvider({ children }) {
     searchQuery,
     setSearchQuery,
     searchResults,
-    setSearchResults,
     isLoading,
-    setIsLoading,
+    markerSelected,
+    setMarkerSelected,
   };
 
   return (

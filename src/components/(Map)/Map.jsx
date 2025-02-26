@@ -27,11 +27,13 @@ const MapComponent = forwardRef(
     },
     ref
   ) => {
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [locations, setLocations] = useState([]);
     const mapRef = useRef(null);
-    const { allProducts, loading, error, selectedProduct: selectedProductContext } = useProducts();
-    const { searchResults } = useSearch();
-    const filteredProducts = searchResults || [];
+    const { allProducts, loading: productsLoading, error: productsError, selectedProduct: selectedProductContext } = useProducts();
+    const { searchResults: filteredProducts, setMarkerSelected } = useSearch();
+    const filteredProductsList = filteredProducts || [];
 
     // Expose the centerOnLocation function to parent components
     useImperativeHandle(ref, () => ({
@@ -50,11 +52,11 @@ const MapComponent = forwardRef(
     }));
 
     useEffect(() => {
-      if (!loading && !error) {
+      if (!productsLoading && !productsError) {
         // Decide which products to display
         const productsToShow = 
-          (filteredProducts && filteredProducts.length > 0) 
-            ? filteredProducts 
+          (filteredProductsList && filteredProductsList.length > 0) 
+            ? filteredProductsList 
             : allProducts || [];
         
         console.log(`Map preparing to show ${productsToShow.length} products`);
@@ -123,11 +125,11 @@ const MapComponent = forwardRef(
           setLocations([]);
         }
       }
-    }, [allProducts, filteredProducts, loading, error]);
+    }, [allProducts, filteredProductsList, productsLoading, productsError]);
 
     useEffect(() => {
       // Debug log all products to help identify issues
-      if (!loading && allProducts) {
+      if (!productsLoading && allProducts) {
         console.log(`Total products available: ${allProducts.length}`);
         
         // Analyze geo field distribution
@@ -153,7 +155,7 @@ const MapComponent = forwardRef(
           console.log('Sample products without coordinates:', withoutCoords.slice(0, 3));
         }
       }
-    }, [allProducts, loading]);
+    }, [allProducts, productsLoading]);
 
     const ZoomControl = ({ setZoom, zoom }) => {
       const map = useMap();
@@ -234,7 +236,7 @@ const MapComponent = forwardRef(
 
     const getFilteredLocations = () => {
       console.log('Total locations before filtering:', locations.length);
-      console.log('Filtered products from search:', filteredProducts.length);
+      console.log('Filtered products from search:', filteredProductsList.length);
       console.log('Selected Product:', selectedProductContext);
 
       // Early return if no locations
@@ -250,8 +252,8 @@ const MapComponent = forwardRef(
         }
 
         // If we have filtered products from search, use those
-        if (filteredProducts && filteredProducts.length > 0) {
-          return filteredProducts.some(product => {
+        if (filteredProductsList && filteredProductsList.length > 0) {
+          return filteredProductsList.some(product => {
             const productName = product.product_name || product.name || '';
             const locationProduct = location.product || '';
             
@@ -454,7 +456,7 @@ const MapComponent = forwardRef(
 
     useEffect(() => {
       // If filteredProducts becomes empty and we had filtered products before
-      if (filteredProducts.length === 0 && prevFilteredProductsRef.current > 0) {
+      if (filteredProductsList.length === 0 && prevFilteredProductsRef.current > 0) {
         console.log("Search results cleared, resetting map display");
         
         // No need to select a specific product when clearing search
@@ -468,8 +470,12 @@ const MapComponent = forwardRef(
       }
       
       // Keep track of previous filteredProducts length
-      prevFilteredProductsRef.current = filteredProducts.length;
-    }, [filteredProducts]);
+      prevFilteredProductsRef.current = filteredProductsList.length;
+    }, [filteredProductsList]);
+
+    useEffect(() => {
+      setMarkerSelected(!!selectedLocation);
+    }, [selectedLocation, setMarkerSelected]);
 
     return (
       <>
@@ -493,7 +499,7 @@ const MapComponent = forwardRef(
               top: '10px',
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 1000,
+              zIndex: 1,
               background: 'rgba(255,255,255,0.8)',
               padding: '10px',
               borderRadius: '5px'
@@ -506,7 +512,7 @@ const MapComponent = forwardRef(
               position: 'absolute',
               top: '10px',
               right: '10px',
-              zIndex: 1000,
+              zIndex: 1,
               background: 'rgba(255,255,255,0.8)',
               padding: '5px',
               borderRadius: '5px',
@@ -569,7 +575,7 @@ const MapComponent = forwardRef(
         </MapContainer>
         <style jsx global>{`
           .leaflet-popup {
-            z-index: 2000 !important;
+            z-index: 9999 !important;
           }
           .leaflet-popup-content-wrapper {
             border-radius: 12px;
@@ -579,6 +585,36 @@ const MapComponent = forwardRef(
           }
           .leaflet-popup-tip {
             background: rgba(255, 255, 255, 0.95);
+          }
+          /* Ensure popup container is above everything */
+          .leaflet-pane {
+            z-index: 9000 !important;
+          }
+          .leaflet-popup-pane {
+            z-index: 9500 !important;
+          }
+          .leaflet-overlay-pane {
+            z-index: 8500 !important;
+          }
+          /* Fix for markers being hidden behind map tiles */
+          .leaflet-map-pane {
+            z-index: 800 !important;
+          }
+          .leaflet-tile-pane {
+            z-index: 500 !important;
+          }
+          .leaflet-marker-pane {
+            z-index: 600 !important;
+          }
+          .leaflet-shadow-pane {
+            z-index: 550 !important;
+          }
+          /* Ensure SVG layers (where circles are rendered) appear above tiles */
+          .leaflet-objects-pane {
+            z-index: 650 !important;
+          }
+          .leaflet-svg-pane {
+            z-index: 700 !important;
           }
         `}</style>
       </>

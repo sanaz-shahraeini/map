@@ -15,8 +15,8 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  // Add output standalone to optimize for Vercel deployment
-  output: 'standalone',
+  // Change to export for static generation and disable prerender
+  output: 'export',
 };
 
 export default nextConfig;

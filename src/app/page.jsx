@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, Suspense, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -43,6 +43,17 @@ const Map = dynamic(
     loading: () => <div>Loading map...</div>
   }
 );
+
+// Client-side only component to avoid SSR issues
+const ClientOnly = ({ children, fallback = <div>Loading...</div> }) => {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  return isClient ? children : fallback;
+};
 
 const IndexPage = () => {
   const theme = useTheme();
@@ -172,28 +183,30 @@ const IndexPage = () => {
                   height: "100%",
                 }}
               >
-                <section
-                  style={{
-                    height: "100vh",
-                    width: "100vw",
-                    position: "fixed",
-                    zIndex: -1,
-                    top: 0,
-                    left: 0,
-                  }}
-                >
-                  <Map
-                    ref={mapRef}
-                    selectedCountry={selectedCountry}
-                    selectedProduct={selectedProduct}
-                    yearRange={yearRange}
-                    selectedCategory={selectedCategory}
-                    setCategories={setCategories}
-                    categories={categories}
-                    zoom={mapZoom}
-                    setZoom={setMapZoom}
-                  />
-                </section>
+                <ClientOnly>
+                  <section
+                    style={{
+                      height: "100vh",
+                      width: "100vw",
+                      position: "fixed",
+                      zIndex: -1,
+                      top: 0,
+                      left: 0,
+                    }}
+                  >
+                    <Map
+                      ref={mapRef}
+                      selectedCountry={selectedCountry}
+                      selectedProduct={selectedProduct}
+                      yearRange={yearRange}
+                      selectedCategory={selectedCategory}
+                      setCategories={setCategories}
+                      categories={categories}
+                      zoom={mapZoom}
+                      setZoom={setMapZoom}
+                    />
+                  </section>
+                </ClientOnly>
               </Grid>
 
               {/* Floating Info Card */}
@@ -305,14 +318,16 @@ const IndexPage = () => {
                   zIndex: 1000,
                 }}
               >
-                <Suspense fallback={<div>Loading...</div>}>
-                  <VerticalToggleButtons
-                    mapZoom={mapZoom}
-                    setMapZoom={setMapZoom}
-                    selectedProduct={selectedProduct}
-                    setShowInfoCard={setShowInfoCard}
-                  />
-                </Suspense>
+                <ClientOnly>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <VerticalToggleButtons
+                      mapZoom={mapZoom}
+                      setMapZoom={setMapZoom}
+                      selectedProduct={selectedProduct}
+                      setShowInfoCard={setShowInfoCard}
+                    />
+                  </Suspense>
+                </ClientOnly>
               </Grid>
             </Grid>
           </Box>

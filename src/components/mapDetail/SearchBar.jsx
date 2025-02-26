@@ -159,7 +159,7 @@ const SearchBar = ({ mapRef }) => {
           sx={{ marginRight: isMobile ? 0 : "8px", position: "relative" }}
         >
           <TextField
-            placeholder="Search for products (type a letter to find zehnder-products)"
+            placeholder="Search for products"
             variant="outlined"
             fullWidth
             value={searchQuery}

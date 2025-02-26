@@ -235,47 +235,23 @@ const MapComponent = forwardRef(
     const getFilteredLocations = () => {
       console.log('Total locations before filtering:', locations.length);
       console.log('Filtered products from search:', filteredProducts.length);
+      console.log('Filtered Products:', filteredProducts);
+      console.log('Available Locations:', locations);
 
       const filtered = locations.filter((location) => {
         console.log('Checking location:', location.product);
         // Handle search results filtering
         if (filteredProducts && filteredProducts.length > 0) {
           // Use more flexible matching for search results
-          return filteredProducts.some(product => {
+          const matchesSearch = filteredProducts.some(product => {
             const productName = product.product_name || product.name || '';
             console.log('Checking against product:', productName);
-            // Try several matching strategies
-            const locationProduct = location.product || '';
-            
-            // Direct match
-            if (productName === locationProduct) {
-              return true;
-            }
-            
-            // Check by ID
-            if (product.id && product.id === location.productId) {
-              return true;
-            }
-            
-            // For Zehnder products, match the part after "zehnder-"
-            if (productName.includes('zehnder-') && locationProduct.includes('zehnder-')) {
-              const zehnderIndex1 = productName.indexOf('zehnder-') + 8;
-              const zehnderIndex2 = locationProduct.indexOf('zehnder-') + 8;
-              
-              if (zehnderIndex1 < productName.length && zehnderIndex2 < locationProduct.length) {
-                const afterPrefix1 = productName.substring(zehnderIndex1);
-                const afterPrefix2 = locationProduct.substring(zehnderIndex2);
-                
-                // If they start with the same character, consider it a match
-                if (afterPrefix1.charAt(0) === afterPrefix2.charAt(0)) {
-                  return true;
-                }
-              }
-            }
-            
-            // Substring matching as a fallback
-            return locationProduct.includes(productName) || productName.includes(locationProduct);
+            // Check if the location matches the product name
+            const isMatch = location.product === productName;
+            console.log(`Match found: ${isMatch}`);
+            return isMatch;
           });
+          return matchesSearch;
         }
 
         // Other filters for when search is not active

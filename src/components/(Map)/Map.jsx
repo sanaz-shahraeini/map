@@ -524,14 +524,14 @@ const MapComponent = forwardRef(
             // Different style for selected marker
             const circleOptions = isSelected 
               ? { 
-                  fillColor: "#ff4500", // Highlight color 
-                  color: "#000",
+                  fillColor: "#4DB6AC", // Teal 300 for selected (brighter)
+                  color: "#00695C", // Teal 800 border (darker)
                   weight: 2,
                   fillOpacity: 0.8,
                 }
               : {
-                  fillColor: location.isEpd ? "#8BC34A" : "#FF5722",
-                  color: location.isEpd ? "#689F38" : "#E64A19",
+                  fillColor: location.isEpd ? "#4DB6AC" : "#00695C", // Teal 300 vs Teal 800 (light vs dark)
+                  color: location.isEpd ? "#26A69A" : "#004D40", // Teal 400 vs Teal 900 border
                   weight: 1,
                   fillOpacity: 0.6,
                 };
@@ -569,7 +569,7 @@ const MapComponent = forwardRef(
         </MapContainer>
         <style jsx global>{`
           .leaflet-popup {
-            z-index: 1500 !important;
+            z-index: 2000 !important;
           }
           .leaflet-popup-content-wrapper {
             border-radius: 12px;

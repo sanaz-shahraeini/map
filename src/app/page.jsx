@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, Suspense, lazy } from "react";
 import {
   Box,
   Paper,
@@ -12,7 +12,12 @@ import {
 import Grid from "@mui/material/Grid2";
 import MainSidebar from "../components/(Slider)/MainSidebar"
 import VerticalIcons from "../components/mapDetail/VerticalIcons";
-import VerticalToggleButtons from "../components/(Map)/VerticalToggleButtons";
+// Import VerticalToggleButtons dynamically to ensure it only loads on the client
+import dynamic from 'next/dynamic';
+const VerticalToggleButtons = dynamic(
+  () => import('../components/(Map)/VerticalToggleButtons'),
+  { ssr: false } // This ensures the component only renders on the client
+);
 import SearchBar from "../components/mapDetail/SearchBar";
 import countryCoordinates from "../../public/data/countryCoordinates.jsx";
 import Map from "../components/(Map)/Map";
@@ -283,12 +288,14 @@ const IndexPage = () => {
                 zIndex: 1000,
               }}
             >
-              <VerticalToggleButtons
-                mapZoom={mapZoom}
-                setMapZoom={setMapZoom}
-                selectedProduct={selectedProduct}
-                setShowInfoCard={setShowInfoCard}
-              />
+              <Suspense fallback={<div>Loading...</div>}>
+                <VerticalToggleButtons
+                  mapZoom={mapZoom}
+                  setMapZoom={setMapZoom}
+                  selectedProduct={selectedProduct}
+                  setShowInfoCard={setShowInfoCard}
+                />
+              </Suspense>
             </Grid>
           </Grid>
         </Box>

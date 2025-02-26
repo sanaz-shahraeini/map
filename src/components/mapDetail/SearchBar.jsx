@@ -110,6 +110,18 @@ const SearchBar = ({ mapRef }) => {
     setShowResults(false);
   };
 
+  const handleSearchClick = () => {
+    // Clear the search input
+    setSearchQuery("");
+    setContextSearchQuery("");
+    
+    // Reset the selected product to show all markers
+    setSelectedProduct(null);
+    
+    // Hide the search results
+    setShowResults(false);
+  };
+
   // Group products by country
   const groupedByCountry = Array.isArray(filteredProducts)
     ? filteredProducts.reduce((acc, product) => {
@@ -144,14 +156,14 @@ const SearchBar = ({ mapRef }) => {
         width: "100%",
         position: "fixed",
         top: isMobile ? 0 : 100,
-        zIndex: 1000,
+        zIndex: 900,
       }}
     >
       <Grid
         container
         display={"flex"}
         justifyContent="center"
-        sx={{ width: isMobile ? "90%" : "50%" }}
+        sx={{ width: isMobile ? "95%" : "70%" }}
       >
         <Grid
           item
@@ -165,6 +177,7 @@ const SearchBar = ({ mapRef }) => {
             value={searchQuery}
             onChange={handleSearchChange}
             onKeyPress={handleKeyPress}
+            onClick={handleSearchClick}
             sx={{
               borderRadius: "25px",
               transition: "all 0.3s ease",

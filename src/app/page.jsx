@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, Suspense, lazy } from "react";
+import { useState, useRef, Suspense } from "react";
 import {
   Box,
   Paper,
@@ -10,21 +10,39 @@ import {
   useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import dynamic from 'next/dynamic';
 import MainSidebar from "../components/(Slider)/MainSidebar"
 import VerticalIcons from "../components/mapDetail/VerticalIcons";
-// Import VerticalToggleButtons dynamically to ensure it only loads on the client
-import dynamic from 'next/dynamic';
-const VerticalToggleButtons = dynamic(
-  () => import('../components/(Map)/VerticalToggleButtons'),
-  { ssr: false } // This ensures the component only renders on the client
-);
 import SearchBar from "../components/mapDetail/SearchBar";
 import countryCoordinates from "../../public/data/countryCoordinates.jsx";
-import Map from "../components/(Map)/Map";
 import Header from "../components/header/Header";
 import "../css/colors.css";
 import { SearchProvider } from "../useContexts/SearchContext";
 import { ProductsProvider } from "../useContexts/ProductsContext";
+
+// Dynamic imports for components that need to be client-side only
+const VerticalToggleButtons = dynamic(
+  () => import('../components/(Map)/VerticalToggleButtons').catch(err => {
+    console.error('Failed to load VerticalToggleButtons component:', err);
+    return () => <div>Error loading buttons</div>;
+  }),
+  { 
+    ssr: false, // This ensures the component only renders on the client
+    loading: () => <div>Loading...</div>
+  }
+);
+
+// Dynamic import for Map component to avoid server-side rendering issues
+const Map = dynamic(
+  () => import('../components/(Map)/Map').catch(err => {
+    console.error('Failed to load Map component:', err);
+    return () => <div>Error loading map</div>;
+  }),
+  { 
+    ssr: false,
+    loading: () => <div>Loading map...</div>
+  }
+);
 
 const IndexPage = () => {
   const theme = useTheme();

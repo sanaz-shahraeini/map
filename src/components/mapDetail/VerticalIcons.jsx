@@ -11,12 +11,14 @@ import {
   Zoom,
   Badge,
   Avatar,
+  Chip,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import MenuIcon from "@mui/icons-material/Menu";
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import CategoryIcon from '@mui/icons-material/Category';
-import StarIcon from '@mui/icons-material/Star';
+import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import { useProducts } from "../../useContexts/ProductsContext";
 import { styled } from "@mui/material/styles";
 
@@ -145,23 +147,30 @@ const VerticalIcons = ({
     setMobileOpen(!mobileOpen);
   };
 
-  // Get icon for category
-  const getCategoryIcon = (name, selected) => {
-    if (name === "all") {
-      return <ViewInArIcon fontSize="small" />;
-    }
+  // Get first letter of category name for the avatar
+  const getCategoryInitial = (name) => {
+    if (name === "all") return "A";
+    return name.charAt(0).toUpperCase();
+  };
+
+  // Get color based on category name (consistent coloring)
+  const getCategoryColor = (name) => {
+    if (name === "all") return "#00897B";
     
-    // Choose different icons for different categories
-    const iconIndex = topCategories.findIndex(cat => cat.name === name);
+    // Generate consistent colors based on string hashing
+    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colors = [
+      "#00897B", // teal
+      "#3949AB", // indigo
+      "#D81B60", // pink
+      "#8E24AA", // purple
+      "#F57C00", // orange
+      "#5D4037", // brown
+      "#546E7A", // blue grey
+      "#607D8B", // blue grey
+    ];
     
-    switch (iconIndex % 3) {
-      case 0:
-        return <CategoryIcon fontSize="small" />;
-      case 1:
-        return <StarIcon fontSize="small" />;
-      default:
-        return <ViewInArIcon fontSize="small" />;
-    }
+    return colors[hash % colors.length];
   };
 
   const SidebarContent = () => (
@@ -182,7 +191,7 @@ const VerticalIcons = ({
       {/* Logo/Profile area at top */}
       <Box 
         sx={{ 
-          mb: 5, 
+          mb: 2, 
           display: 'flex', 
           flexDirection: 'column', 
           alignItems: 'center',
@@ -228,6 +237,23 @@ const VerticalIcons = ({
         </Typography>
       </Box>
 
+      {/* "Categories" Label */}
+      <Chip
+        label="Categories"
+        size="small"
+        sx={{
+          fontSize: '10px',
+          fontWeight: 600,
+          backgroundColor: 'rgba(0, 137, 123, 0.08)',
+          color: '#00897B',
+          mb: 2,
+          height: '22px',
+          '& .MuiChip-label': {
+            px: 1
+          }
+        }}
+      />
+
       <List sx={{ width: "100%", p: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Tooltip
           title={`All Products (${totalProducts})`}
@@ -240,9 +266,33 @@ const VerticalIcons = ({
             onClick={() => handleCategoryClick("all")}
           >
             <CategoryIndicator selected={selectedCategory === "all"} />
-            <StyledCategoryIcon selected={selectedCategory === "all"} className="category-icon">
-              {getCategoryIcon("all", selectedCategory === "all")}
-            </StyledCategoryIcon>
+            <Badge
+              badgeContent={totalProducts}
+              color="primary"
+              sx={{ 
+                '& .MuiBadge-badge': {
+                  backgroundColor: '#00897B',
+                  fontSize: '9px',
+                  minWidth: '16px',
+                  height: '16px',
+                  top: -2,
+                  right: -2,
+                }
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: '30px',
+                  height: '30px',
+                  fontSize: '12px',
+                  backgroundColor: selectedCategory === "all" ? '#00897B' : 'rgba(0, 137, 123, 0.12)',
+                  color: selectedCategory === "all" ? '#fff' : '#00897B',
+                  transition: "all 0.3s ease",
+                }}
+              >
+                <AllInclusiveIcon fontSize="small" />
+              </Avatar>
+            </Badge>
             <Typography
               className="category-label"
               variant="caption"
@@ -285,9 +335,18 @@ const VerticalIcons = ({
                   }
                 }}
               >
-                <StyledCategoryIcon selected={selectedCategory === category.name} className="category-icon">
-                  {getCategoryIcon(category.name, selectedCategory === category.name)}
-                </StyledCategoryIcon>
+                <Avatar
+                  sx={{
+                    width: '30px',
+                    height: '30px',
+                    fontSize: '12px',
+                    backgroundColor: selectedCategory === category.name ? getCategoryColor(category.name) : `${getCategoryColor(category.name)}22`, // 22 is hex for 13% opacity
+                    color: selectedCategory === category.name ? '#fff' : getCategoryColor(category.name),
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  {getCategoryInitial(category.name)}
+                </Avatar>
               </Badge>
               <Typography
                 className="category-label"

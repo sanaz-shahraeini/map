@@ -1,7 +1,7 @@
 "use client";
 
 // Setup Leaflet to work with Next.js and dynamic imports
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import {
   useState,
@@ -19,30 +19,29 @@ import Loading from "../common/Loading";
 
 // Dynamically import react-leaflet to avoid SSR issues
 const MapContainer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { 
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  {
     ssr: false,
-    loading: () => <div>Loading map component...</div>
+    loading: () => <div>Loading map component...</div>,
   }
 );
 
 const TileLayer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
   { ssr: false }
 );
 
 const Circle = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Circle),
+  () => import("react-leaflet").then((mod) => mod.Circle),
   { ssr: false }
 );
 
-const Popup = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Popup),
-  { ssr: false }
-);
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
 
 const useMap = dynamic(
-  () => import('react-leaflet').then((mod) => mod.useMap),
+  () => import("react-leaflet").then((mod) => mod.useMap),
   { ssr: false }
 );
 
@@ -59,26 +58,22 @@ const MapComponent = forwardRef(
     },
     ref
   ) => {
-    const [loading, setLoading] = useState(false);
-    // Early return with a loading indicator if we're not in a browser environment
+    // 1. All useState hooks
     const [isBrowser, setIsBrowser] = useState(false);
-    
-    useEffect(() => {
-      setIsBrowser(true);
-    }, []);
-    
-    if (!isBrowser) {
-      return <Loading message="Loading..." />;
-    }
-
-    const [loading, setLoading] = useState(false); 
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [locations, setLocations] = useState([]);
     const [epdFilterStats, setEpdFilterStats] = useState({
       total: 0,
       filtered: 0,
     });
+    const [selectedLocation, setSelectedLocation] = useState(null);
+
+    // 2. All useRef hooks
     const mapRef = useRef(null);
+    const prevFilteredProductsRef = useRef(0);
+
+    // 3. All context hooks
     const {
       allProducts,
       loading: productsLoading,
@@ -88,21 +83,38 @@ const MapComponent = forwardRef(
     const { searchResults: filteredProducts, setMarkerSelected } = useSearch();
     const filteredProductsList = filteredProducts || [];
 
-    // Expose the centerOnLocation function to parent components
-    useImperativeHandle(ref, () => ({
-      centerOnLocation: (lat, lng, zoomLevel = 8) => {
-        if (mapRef.current) {
-          mapRef.current.setView([lat, lng], zoomLevel);
-        }
-      },
-      getLocationByProduct: (productName) => {
-        const location = locations.find(
-          (loc) =>
-            (loc.product || "").toLowerCase() === productName.toLowerCase()
-        );
-        return location;
-      },
-    }));
+    // Combined loading state for all data fetching operations
+    const isLoading = loading || productsLoading;
+    const loadingMessage = productsLoading
+      ? "Loading product data..."
+      : loading
+      ? "Processing locations..."
+      : "Loading map...";
+
+    // 4. useImperativeHandle (must be before conditional returns)
+    useImperativeHandle(
+      ref,
+      () => ({
+        centerOnLocation: (lat, lng, zoomLevel = 8) => {
+          if (mapRef.current) {
+            mapRef.current.setView([lat, lng], zoomLevel);
+          }
+        },
+        getLocationByProduct: (productName) => {
+          const location = locations.find(
+            (loc) =>
+              (loc.product || "").toLowerCase() === productName.toLowerCase()
+          );
+          return location;
+        },
+      }),
+      [locations]
+    );
+
+    // 5. All useEffect hooks - MUST be before any conditional returns
+    useEffect(() => {
+      setIsBrowser(true);
+    }, []);
 
     useEffect(() => {
       // Set loading state to true when starting to process locations, but only if we're not already loading products
@@ -246,44 +258,6 @@ const MapComponent = forwardRef(
       }
     }, [allProducts, productsLoading]);
 
-    const ZoomControl = ({ setZoom, zoom }) => {
-      // Use a ref to check if we're in a browser environment
-      const [isMounted, setIsMounted] = useState(false);
-      
-      useEffect(() => {
-        setIsMounted(true);
-      }, []);
-      
-      // If not mounted yet, don't render
-      if (!isMounted) return null;
-      
-      const map = useMap();
-
-      useEffect(() => {
-        mapRef.current = map;
-        map.setView(map.getCenter(), zoom);
-      }, [zoom, map]);
-
-      useEffect(() => {
-        const updateZoom = () => {
-          setZoom(map.getZoom());
-        };
-
-        map.on("zoomend", updateZoom);
-        return () => {
-          map.off("zoomend", updateZoom);
-        };
-      }, [map, setZoom]);
-
-      return null;
-    };
-
-    // Combined loading state for all data fetching operations
-    const isLoading = loading || productsLoading;
-    const loadingMessage = productsLoading
-      ? "Loading product data..."
-      : "Processing locations...";
-
     // Log the loading state for debugging
     useEffect(() => {
       console.log("Loading state:", {
@@ -292,6 +266,67 @@ const MapComponent = forwardRef(
         isLoading,
       });
     }, [loading, productsLoading, isLoading]);
+
+    const ZoomControl = ({ setZoom, zoom }) => {
+      // 1. All useState hooks
+      const [isMounted, setIsMounted] = useState(false);
+
+      // 2. Get map instance
+      const map = useMap();
+
+      // 3. All useEffect hooks
+      useEffect(() => {
+        setIsMounted(true);
+      }, []);
+
+      useEffect(() => {
+        if (!isMounted || !map) return;
+
+        // Ensure map is properly initialized
+        if (
+          typeof map.getCenter === "function" &&
+          typeof map.setView === "function"
+        ) {
+          mapRef.current = map;
+          try {
+            const center = map.getCenter();
+            if (center) {
+              map.setView(center, zoom);
+            }
+          } catch (error) {
+            console.warn("Map not ready yet:", error);
+          }
+        }
+      }, [zoom, map, isMounted]);
+
+      useEffect(() => {
+        if (!isMounted || !map) return;
+
+        // Ensure map is properly initialized
+        if (typeof map.on === "function" && typeof map.getZoom === "function") {
+          const updateZoom = () => {
+            try {
+              const currentZoom = map.getZoom();
+              if (typeof currentZoom === "number") {
+                setZoom(currentZoom);
+              }
+            } catch (error) {
+              console.warn("Error updating zoom:", error);
+            }
+          };
+
+          map.on("zoomend", updateZoom);
+          return () => {
+            map.off("zoomend", updateZoom);
+          };
+        }
+      }, [map, setZoom, isMounted]);
+
+      // Early return if not mounted or no map
+      if (!isMounted || !map) return null;
+
+      return null;
+    };
 
     const groupByCountry = (locations) => {
       return locations.reduce((acc, location) => {
@@ -603,9 +638,6 @@ const MapComponent = forwardRef(
       return radius;
     };
 
-    const [selectedLocation, setSelectedLocation] = useState(null);
-    const prevFilteredProductsRef = useRef(0);
-
     useEffect(() => {
       if (selectedProductContext && locations.length > 0) {
         const selectedName =
@@ -711,6 +743,39 @@ const MapComponent = forwardRef(
     useEffect(() => {
       setMarkerSelected(!!selectedLocation);
     }, [selectedLocation, setMarkerSelected]);
+
+    // Early return with loading state if we're not in a browser environment or still loading products
+    if (!isBrowser || isLoading) {
+      return (
+        <div
+          style={{
+            height: "100vh",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            background: "rgba(255, 255, 255, 0.9)",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            zIndex: 9999,
+          }}
+        >
+          <Loading message={loadingMessage} />
+          {productsLoading && (
+            <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
+              Fetching product data...
+            </div>
+          )}
+          {loading && !productsLoading && (
+            <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
+              Processing {allProducts?.length || 0} products...
+            </div>
+          )}
+        </div>
+      );
+    }
 
     return (
       <>
@@ -857,69 +922,6 @@ const MapComponent = forwardRef(
                   weight: 1,
                   fillOpacity: 0.6,
                 };
-        {isBrowser ? (
-          <MapContainer
-            center={[30, -10]}
-            zoom={3}
-            style={{ height: "100vh", width: "100%" }}
-            ref={mapRef}
-            maxBounds={[
-              [-90, -180],
-              [90, 180],
-            ]}
-          >
-            <ZoomControl setZoom={setZoom} zoom={zoom} />
-            <TileLayer 
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" 
-            />
-            {distributedLocations.length === 0 && !isLoading && (
-              <div style={{
-                position: 'absolute',
-                top: '10px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 1,
-                background: 'rgba(255,255,255,0.8)',
-                padding: '10px',
-                borderRadius: '5px'
-              }}>
-                No markers to display. Check console for details.
-              </div>
-            )}
-            {distributedLocations.length > 0 && (
-              <div style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                zIndex: 1,
-                background: 'rgba(255,255,255,0.8)',
-                padding: '5px',
-                borderRadius: '5px',
-                fontSize: '12px'
-              }}>
-                Showing {distributedLocations.length} markers
-              </div>
-            )}
-            {distributedLocations.map((location, index) => {
-              // Determine if this is the selected location
-              const isSelected = selectedLocation && 
-                location.lat === selectedLocation.lat && 
-                location.lng === selectedLocation.lng;
-              
-              // Different style for selected marker
-              const circleOptions = isSelected 
-                ? { 
-                    fillColor: "#4DB6AC", // Teal 300 for selected (brighter)
-                    color: "#00695C", // Teal 800 border (darker)
-                    weight: 2,
-                    fillOpacity: 0.8,
-                  }
-                : {
-                    fillColor: location.isEpd ? "#4DB6AC" : "#00695C", // Teal 300 vs Teal 800 (light vs dark)
-                    color: location.isEpd ? "#26A69A" : "#004D40", // Teal 400 vs Teal 900 border
-                    weight: 1,
-                    fillOpacity: 0.6,
-                  };
 
             return (
               <Circle
@@ -963,45 +965,6 @@ const MapComponent = forwardRef(
           })}
         </MapContainer>
 
-              return (
-                <Circle
-                  key={`${location.lat}-${location.lng}-${index}`}
-                  center={[location.lat, location.lng]}
-                  radius={getCircleRadius(zoom)}
-                  pathOptions={circleOptions}
-                >
-                  <Popup>
-                    <div style={{ maxWidth: "250px" }}>
-                      <h3>{location.product}</h3>
-                      <p>
-                        <strong>Country:</strong> {location.country}
-                        {isSelected && <span style={{ color: "red" }}> ★ Selected</span>}
-                      </p>
-                      {location.isEpd && (
-                        <p>
-                          <strong>Type:</strong> {location.isEpd}
-                        </p>
-                      )}
-                      {location.description && (
-                        <p>
-                          <strong>Description:</strong> {location.description.substring(0, 100)}
-                          {location.description.length > 100 ? "..." : ""}
-                        </p>
-                      )}
-                    </div>
-                  </Popup>
-                </Circle>
-              );
-            })}
-          </MapContainer>
-        ) : (
-          <div style={{ height: "100vh", width: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <Loading message="Loading map..." />
-          </div>
-        )}
-        
-        {/* Overlay loading indicator when loading */}
-        {isLoading && <Loading message={loadingMessage} />}
         <style jsx global>{`
           .leaflet-popup {
             z-index: 99999 !important;
@@ -1010,7 +973,7 @@ const MapComponent = forwardRef(
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(5px);
           }
           .leaflet-popup-tip {
             background: rgba(255, 255, 255, 0.95);

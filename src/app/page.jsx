@@ -10,65 +10,51 @@ import {
   useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-<<<<<<< HEAD
 import dynamic from "next/dynamic";
 import MainSidebar from "../components/(Slider)/MainSidebar";
 import VerticalIcons from "../components/mapDetail/VerticalIcons";
 import SearchBar from "../components/mapDetail/SearchBar";
 import countryCoordinates from "../../public/data/countryCoordinates.jsx";
-import ViewInArIcon from "@mui/icons-material/ViewInAr";
-
-// Import components dynamically to ensure they only load on the client
-const VerticalToggleButtons = dynamic(
-  () => import("../components/(Map)/VerticalToggleButtons"),
-  { ssr: false }
-);
-
-const Map = dynamic(() => import("../components/(Map)/Map"), { ssr: false });
-=======
-import dynamic from 'next/dynamic';
-import MainSidebar from "../components/(Slider)/MainSidebar"
-import VerticalIcons from "../components/mapDetail/VerticalIcons";
-import SearchBar from "../components/mapDetail/SearchBar";
-import countryCoordinates from "../../public/data/countryCoordinates.jsx";
->>>>>>> a86419533ba02e69a88d92c186b41e3e1fcfac40
 import Header from "../components/header/Header";
 import "../css/colors.css";
 import { SearchProvider } from "../useContexts/SearchContext";
 import { ProductsProvider } from "../useContexts/ProductsContext";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
 
 // Dynamic imports for components that need to be client-side only
 const VerticalToggleButtons = dynamic(
-  () => import('../components/(Map)/VerticalToggleButtons').catch(err => {
-    console.error('Failed to load VerticalToggleButtons component:', err);
-    return () => <div>Error loading buttons</div>;
-  }),
-  { 
+  () =>
+    import("../components/(Map)/VerticalToggleButtons").catch((err) => {
+      console.error("Failed to load VerticalToggleButtons component:", err);
+      return () => <div>Error loading buttons</div>;
+    }),
+  {
     ssr: false, // This ensures the component only renders on the client
-    loading: () => <div>Loading...</div>
+    loading: () => <div>Loading...</div>,
   }
 );
 
 // Dynamic import for Map component to avoid server-side rendering issues
 const Map = dynamic(
-  () => import('../components/(Map)/Map').catch(err => {
-    console.error('Failed to load Map component:', err);
-    return () => <div>Error loading map</div>;
-  }),
-  { 
+  () =>
+    import("../components/(Map)/Map").catch((err) => {
+      console.error("Failed to load Map component:", err);
+      return () => <div>Error loading map</div>;
+    }),
+  {
     ssr: false,
-    loading: () => <div>Loading map...</div>
+    loading: () => <div>Loading map...</div>,
   }
 );
 
 // Client-side only component to avoid SSR issues
 const ClientOnly = ({ children, fallback = <div>Loading...</div> }) => {
   const [isClient, setIsClient] = useState(false);
-  
+
   useEffect(() => {
     setIsClient(true);
   }, []);
-  
+
   return isClient ? children : fallback;
 };
 
@@ -216,31 +202,6 @@ const IndexPage = () => {
                   height: "100%",
                 }}
               >
-<<<<<<< HEAD
-                <section
-                  style={{
-                    height: "100vh",
-                    width: "100vw",
-                    position: "fixed",
-                    zIndex: -1,
-                    top: 0,
-                    left: 0,
-                  }}
-                >
-                  <Map
-                    ref={mapRef}
-                    selectedCountry={selectedCountry}
-                    selectedProduct={selectedProduct}
-                    yearRange={yearRange}
-                    selectedCategory={selectedCategory}
-                    setCategories={setCategories}
-                    categories={categories}
-                    zoom={mapZoom}
-                    setZoom={setMapZoom}
-                    filterEpdOnly={filterEpdOnly}
-                  />
-                </section>
-=======
                 <ClientOnly>
                   <section
                     style={{
@@ -262,10 +223,10 @@ const IndexPage = () => {
                       categories={categories}
                       zoom={mapZoom}
                       setZoom={setMapZoom}
+                      filterEpdOnly={filterEpdOnly}
                     />
                   </section>
                 </ClientOnly>
->>>>>>> a86419533ba02e69a88d92c186b41e3e1fcfac40
               </Grid>
 
               {/* Toggle Buttons */}
@@ -277,19 +238,21 @@ const IndexPage = () => {
                   zIndex: 1000,
                 }}
               >
-                <Suspense fallback={<div>Loading...</div>}>
-                  <VerticalToggleButtons
-                    mapZoom={mapZoom}
-                    setMapZoom={setMapZoom}
-                    selectedProduct={selectedProduct}
-                    setShowInfoCard={setShowInfoCard}
-                    showInfoCard={showInfoCard}
-                    selectedCountry={selectedCountry}
-                    selectedCategory={selectedCategory}
-                    yearRange={yearRange}
-                    isSidebarOpen={isSidebarOpen}
-                  />
-                </Suspense>
+                <ClientOnly>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <VerticalToggleButtons
+                      mapZoom={mapZoom}
+                      setMapZoom={setMapZoom}
+                      selectedProduct={selectedProduct}
+                      setShowInfoCard={setShowInfoCard}
+                      showInfoCard={showInfoCard}
+                      selectedCountry={selectedCountry}
+                      selectedCategory={selectedCategory}
+                      yearRange={yearRange}
+                      isSidebarOpen={isSidebarOpen}
+                    />
+                  </Suspense>
+                </ClientOnly>
               </Grid>
 
               {/* Info Card */}
@@ -440,30 +403,6 @@ const IndexPage = () => {
                   </Box>
                 </Paper>
               </Fade>
-<<<<<<< HEAD
-=======
-
-              {/* Toggle Buttons */}
-              <Grid
-                sx={{
-                  position: "fixed",
-                  bottom: "20px",
-                  right: "20px",
-                  zIndex: 1000,
-                }}
-              >
-                <ClientOnly>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <VerticalToggleButtons
-                      mapZoom={mapZoom}
-                      setMapZoom={setMapZoom}
-                      selectedProduct={selectedProduct}
-                      setShowInfoCard={setShowInfoCard}
-                    />
-                  </Suspense>
-                </ClientOnly>
-              </Grid>
->>>>>>> a86419533ba02e69a88d92c186b41e3e1fcfac40
             </Grid>
           </Box>
         </Box>

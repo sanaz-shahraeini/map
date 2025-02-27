@@ -747,32 +747,48 @@ const MapComponent = forwardRef(
     // Early return with loading state if we're not in a browser environment or still loading products
     if (!isBrowser || isLoading) {
       return (
-        <div
-          style={{
-            height: "100vh",
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            background: "rgba(255, 255, 255, 0.9)",
-            position: "absolute",
-            top: 0,
-            left: 0,
-            zIndex: 9999,
-          }}
-        >
-          <Loading message={loadingMessage} />
-          {productsLoading && (
-            <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
-              Fetching product data...
-            </div>
-          )}
-          {loading && !productsLoading && (
-            <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
-              Processing {allProducts?.length || 0} products...
-            </div>
-          )}
+        <div style={{ position: "relative", height: "100vh", width: "100%" }}>
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 9998,
+              filter: "blur(2px)",
+              WebkitFilter: "blur(2px)",
+            }}
+          >
+            <MapContainer
+              center={[30, -10]}
+              zoom={3}
+              style={{ height: "100vh", width: "100%" }}
+              ref={mapRef}
+              maxBounds={[
+                [-90, -180],
+                [90, 180],
+              ]}
+            >
+              <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+            </MapContainer>
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              background: "rgba(255, 255, 255, 0.5)",
+              zIndex: 9999,
+            }}
+          >
+            <Loading message={loadingMessage} />
+          </div>
         </div>
       );
     }
@@ -973,7 +989,7 @@ const MapComponent = forwardRef(
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(2px);
           }
           .leaflet-popup-tip {
             background: rgba(255, 255, 255, 0.95);

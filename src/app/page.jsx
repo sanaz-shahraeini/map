@@ -30,7 +30,7 @@ const VerticalToggleButtons = dynamic(
     }),
   {
     ssr: false, // This ensures the component only renders on the client
-    loading: () => <div>Loading...</div>,
+    loading: () => <div></div>,
   }
 );
 
@@ -48,7 +48,7 @@ const Map = dynamic(
 );
 
 // Client-side only component to avoid SSR issues
-const ClientOnly = ({ children, fallback = <div>Loading...</div> }) => {
+const ClientOnly = ({ children, fallback = <div></div> }) => {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -239,7 +239,7 @@ const IndexPage = () => {
                 }}
               >
                 <ClientOnly>
-                  <Suspense fallback={<div>Loading...</div>}>
+                  <Suspense fallback={<div></div>}>
                     <VerticalToggleButtons
                       mapZoom={mapZoom}
                       setMapZoom={setMapZoom}

@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Product Location & EPD Visualization Map Platform
 
-## Getting Started
+nextjs react leaflet mapping epd environmental-product-declaration mui typescript tailwindcss geospatial product-visualization interactive-map data-viz sustainability
 
-First, run the development server:
+A modern web application built with Next.js that provides an interactive mapping interface for visualizing product locations and Environmental Product Declarations (EPDs) worldwide.
+
+## 🚀 Features
+
+### Interactive Map Visualization
+
+- Global product location visualization using Leaflet.js
+- Interactive markers with detailed product information
+- Smart marker clustering to prevent overlap
+- Custom popup information for each location
+- Dynamic zoom controls and responsive design
+
+### EPD Explorer Mode
+
+- Dedicated mode for Environmental Product Declaration (EPD) data
+- Year-based filtering for EPD markers
+- Visual distinction between EPD and non-EPD markers
+- Real-time statistics for filtered EPD counts
+- Comprehensive EPD information display
+
+### Advanced Filtering
+
+- Country-based filtering
+- Year range selection
+- Product category filtering
+- Intelligent search functionality with product name support
+- Real-time marker count updates
+
+## 🛠️ Technical Stack
+
+- **Frontend Framework:** Next.js 14 with React 18
+- **Mapping:** Leaflet.js and React-Leaflet
+- **UI Components:** Material-UI (MUI)
+- **Form Handling:** React Hook Form and Formik with Yup validation
+- **Styling:** TailwindCSS and Styled Components
+- **Authentication:** NextAuth.js
+- **Language:** TypeScript
+
+## 📦 Installation
+
+1. Clone the repository:
+
+```bash
+git clone [repository-url]
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Create a `.env.local` file in the root directory and add necessary environment variables:
+
+```env
+NEXT_PUBLIC_API_URL=your_api_url
+# Add other required environment variables
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔧 Configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The application can be configured through various environment variables and configuration files:
 
-## Learn More
+- `next.config.mjs` - Next.js configuration
+- `tailwind.config.ts` - TailwindCSS customization
+- `tsconfig.json` - TypeScript configuration
 
-To learn more about Next.js, take a look at the following resources:
+## 🌟 Performance Optimizations
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Dynamic imports for map components
+- Efficient marker clustering
+- Optimized handling of large datasets
+- Debounced search functionality
+- SSR-friendly implementation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔍 Code Structure
 
-## Deploy on Vercel
+```
+src/
+├── components/
+│   └── (Map)/
+│       └── Map.jsx         # Main mapping component
+├── useContexts/
+│   ├── ProductsContext.js  # Product data management
+│   └── SearchContext.js    # Search functionality
+├── public/
+│   └── data/
+│       └── countryCoordinates.js
+└── ...
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🤝 Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org/) - The React Framework
+- [Leaflet](https://leafletjs.com/) - JavaScript library for interactive maps
+- [Material-UI](https://mui.com/) - React UI framework
+- [TailwindCSS](https://tailwindcss.com/) - Utility-first CSS framework
+
+## 📫 Support
+
+For support, please open an issue in the repository or contact the development team.

@@ -101,7 +101,7 @@ const Header = () => {
                   '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.05)' }
                 }}
               >
-                Products
+                Construction Products
               </Button>
               <Button 
                 size="small" 
@@ -113,7 +113,19 @@ const Header = () => {
                   '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.05)' }
                 }}
               >
-                Analytics
+               Building Products
+              </Button>
+              <Button 
+                size="small" 
+                sx={{ 
+                  color: '#757575',
+                  fontWeight: 500,
+                  mx: 0.5,
+                  fontSize: '0.875rem',
+                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.05)' }
+                }}
+              >
+               Elecronical Products
               </Button>
             </Box>
           )}

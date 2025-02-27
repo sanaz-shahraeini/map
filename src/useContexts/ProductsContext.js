@@ -37,6 +37,8 @@ export const ProductsProvider = ({ children }) => {
           product_name: product.product_name || product.name || 'Unnamed Product',
           name: product.product_name || product.name || 'Unnamed Product',
           isRegularProduct: true,
+          isFromRegularAPI: true,
+          isFromEPDAPI: false,
           type: 'regular',
           // Ensure geo field exists
           geo: product.geo || 'EU27'
@@ -52,6 +54,8 @@ export const ProductsProvider = ({ children }) => {
           product_name: product.name || product.product_name || `EPD Product ${product.uid || ''}`,
           name: product.name || product.product_name || `EPD Product ${product.uid || ''}`,
           isEpdProduct: true,
+          isFromEPDAPI: true,
+          isFromRegularAPI: false,
           type: 'EPD',
           // Ensure geo field exists
           geo: product.geo || 'EU27'

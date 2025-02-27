@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -9,6 +9,9 @@ import {
   Divider,
   List,
   ListItem,
+  FormGroup,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -19,8 +22,13 @@ const Sidebar = ({
   selectedCountry,
   setSelectedCountry,
   countryCoordinates,
+  filterEpdOnly,
+  setFilterEpdOnly,
 }) => {
   const [expanded, setExpanded] = useState(false);
+
+  // No need for local state since we're using the prop directly
+  // and the Switch component will update the parent state
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -46,7 +54,28 @@ const Sidebar = ({
     >
       {/* Year Range Section */}
       <Grid size={{ xs: 12 }}>
-        <Typography>Select Year</Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'medium' }}>EPD Year Filter</Typography>
+          <FormGroup>
+            <FormControlLabel 
+              control={
+                <Switch 
+                  checked={filterEpdOnly}
+                  onChange={(e) => {
+                    if (setFilterEpdOnly) {
+                      setFilterEpdOnly(e.target.checked);
+                    }
+                  }}
+                  size="small"
+                  color="primary"
+                />
+              } 
+              label="EPD API Only" 
+              labelPlacement="start"
+              sx={{ margin: 0 }}
+            />
+          </FormGroup>
+        </Box>
         <Slider
           value={yearRange}
           onChange={(event, newValue) => setYearRange(newValue)}
@@ -57,8 +86,9 @@ const Sidebar = ({
           sx={{ color: "#00897B" }}
         />
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 2 }}>
-          This sidebar allows you to select a specific range of years and filter
-          data.
+          {filterEpdOnly
+            ? "Filter EPD markers from the EPD API by their reference year. Only EPDs within the selected range will be shown." 
+            : "Filter all markers by year range. Both EPD and non-EPD markers will be affected."}
         </Typography>
 
         <Divider sx={{ mt: 2 }} />

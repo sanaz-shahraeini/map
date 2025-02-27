@@ -41,6 +41,7 @@ const IndexPage = () => {
   const [topCategories, setTopCategories] = useState([]);
   const [mapZoom, setMapZoom] = useState(3);
   const [showInfoCard, setShowInfoCard] = useState(true);
+  const [filterEpdOnly, setFilterEpdOnly] = useState(true);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(true);
@@ -85,6 +86,8 @@ const IndexPage = () => {
                 setCategories={setCategories}
                 categories={categories}
                 setSelectedSidebar={setSelectedSidebar}
+                setFilterEpdOnly={setFilterEpdOnly}
+                filterEpdOnly={filterEpdOnly}
               />
             </Box>
 
@@ -138,6 +141,8 @@ const IndexPage = () => {
                       countryCoordinates={countryCoordinates}
                       selectedCategory={selectedCategory}
                       setIsSidebarOpen={setIsSidebarOpen}
+                      filterEpdOnly={filterEpdOnly}
+                      setFilterEpdOnly={setFilterEpdOnly}
                     />
                   </Box>
                 )}
@@ -174,6 +179,7 @@ const IndexPage = () => {
                     categories={categories}
                     zoom={mapZoom}
                     setZoom={setMapZoom}
+                    filterEpdOnly={filterEpdOnly}
                   />
                 </section>
               </Grid>

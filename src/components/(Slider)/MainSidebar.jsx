@@ -30,6 +30,8 @@ const MainSidebar = ({
   countryCoordinates,
   selectedCategory,
   setIsSidebarOpen,
+  filterEpdOnly,
+  setFilterEpdOnly,
 }) => {
   const [products, setProducts] = useState([]);
   const [error, setError] = useState();
@@ -56,7 +58,19 @@ const MainSidebar = ({
         const data1 = await response1.json();
         const data2 = await response2.json();
 
-        const combinedResults = [...data1.results, ...data2.results];
+        // Mark EPD data explicitly for filtering
+        const productsData = data1.results.map(item => ({
+          ...item,
+          isFromRegularAPI: true
+        }));
+        
+        const epdData = data2.results.map(item => ({
+          ...item,
+          type: "EPD", // Mark as EPD type
+          isFromEPDAPI: true
+        }));
+
+        const combinedResults = [...productsData, ...epdData];
 
         const formattedProducts = combinedResults.map((item) => ({
           category_name: item.category_name || item.classific || null,
@@ -119,6 +133,9 @@ const MainSidebar = ({
     const productCategories = (product.category_name || "").split(" / ");
     return productCategories.includes(selectedCategory);
   });
+
+  // Filter products to only include EPD data
+  const epdProducts = filteredProducts.filter(product => product.isFromEPDAPI);
 
   // Function to handle image errors
   const handleImageError = (e) => {
@@ -245,8 +262,8 @@ const MainSidebar = ({
                     </Box>
                   </ListItem>
                 ))
-              ) : filteredProducts.length > 0 ? (
-                filteredProducts.map((product, index) => (
+              ) : epdProducts.length > 0 ? (
+                epdProducts.map((product, index) => (
                   <React.Fragment key={`Product${index}`}>
                     <ListItem
                       sx={{
@@ -326,7 +343,7 @@ const MainSidebar = ({
                         <InfoOutlinedIcon sx={{ color: "#4DB6AC" }} />
                       </IconButton>
                     </ListItem>
-                    {index < filteredProducts.length - 1 && (
+                    {index < epdProducts.length - 1 && (
                       <Divider sx={{ width: "100%", bgcolor: "#e0e0e0" }} />
                     )}
                   </React.Fragment>
@@ -344,6 +361,8 @@ const MainSidebar = ({
               selectedCountry={selectedCountry}
               setSelectedCountry={setSelectedCountry}
               countryCoordinates={countryCoordinates}
+              filterEpdOnly={filterEpdOnly}
+              setFilterEpdOnly={setFilterEpdOnly}
             />
           )}
         </Box>

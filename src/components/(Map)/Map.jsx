@@ -25,12 +25,14 @@ const MapComponent = forwardRef(
       selectedCategory,
       zoom,
       setZoom,
+      filterEpdOnly = true, // Default to filtering only EPD markers by year
     },
     ref
   ) => {
     const [loading, setLoading] = useState(false); 
     const [error, setError] = useState(null);
     const [locations, setLocations] = useState([]);
+    const [epdFilterStats, setEpdFilterStats] = useState({ total: 0, filtered: 0 });
     const mapRef = useRef(null);
     const { allProducts, loading: productsLoading, error: productsError, selectedProduct: selectedProductContext } = useProducts();
     const { searchResults: filteredProducts, setMarkerSelected } = useSearch();
@@ -111,6 +113,8 @@ const MapComponent = forwardRef(
                 product: product.product_name || product.name || "Unnamed Product",
                 description: product.description || "",
                 isEpd: product.type === "EPD" ? "EPD" : null,
+                isFromEPDAPI: product.isFromEPDAPI || false,
+                isFromRegularAPI: product.isFromRegularAPI || false,
                 categories: product.classific || product.category_name || "",
                 // Additional debugging info
                 geo: product.geo,
@@ -260,22 +264,42 @@ const MapComponent = forwardRef(
       });
     };
 
-    const getFilteredLocations = () => {
+    const getFilteredLocations = useCallback(() => {
       console.log('Total locations before filtering:', locations.length);
       console.log('Filtered products from search:', filteredProductsList.length);
       console.log('Selected Product:', selectedProductContext);
+      console.log('Year Range:', yearRange, 'EPD Only:', filterEpdOnly);
 
       // Early return if no locations
       if (!locations || locations.length === 0) {
         console.log('No locations available');
-        return [];
+        return { filtered: [], epdStats: { total: 0, filtered: 0 } };
       }
 
+      // Counters for filtering statistics
+      let totalEpdMarkers = 0;
+      let epdMarkersFilteredByYear = 0;
+      
       const filtered = locations.filter((location) => {
+        // Count EPD markers from the EPD API only
+        if (location && location.isEpd && location.isFromEPDAPI) {
+          totalEpdMarkers++;
+        }
+        
         // Skip undefined or null locations
         if (!location || !location.product) {
           return false;
         }
+
+        // If filterEpdOnly is true, only show EPD markers from the specific API
+        if (filterEpdOnly) {
+          // Only show markers from the EPD API when EPD Explorer is active
+          if (!location.isFromEPDAPI) {
+            return false;
+          }
+        }
+        // When filterEpdOnly is false (All icon clicked), show all markers from both APIs
+        // No additional filtering needed here as we want to show everything
 
         // If we have filtered products from search, use those
         if (filteredProductsList && filteredProductsList.length > 0) {
@@ -340,12 +364,32 @@ const MapComponent = forwardRef(
           !selectedCountry ||
           location.country === selectedCountry;
 
-        const yearMatch =
-          yearRange[0] === "all" ||
-          yearRange[1] === "all" ||
-          ((location.refYear === "all" || location.refYear >= yearRange[0]) &&
-            (location.validUntil === "all" ||
-              location.validUntil <= yearRange[1]));
+        // Year filtering logic
+        let yearMatch = true;
+        if (yearRange[0] !== "all" && yearRange[1] !== "all") {
+          // This should only apply to EPD markers from the EPD API if filterEpdOnly is true
+          if (filterEpdOnly) {
+            if (location.isEpd && location.isFromEPDAPI) {
+              const refYearNum = location.refYear && location.refYear !== "all" ? parseInt(location.refYear) : null;
+              yearMatch = 
+                (location.refYear === "all" || 
+                 (refYearNum && refYearNum >= yearRange[0] && refYearNum <= yearRange[1]));
+              
+              // Debug EPD year filtering
+              if (!yearMatch && location.refYear) {
+                console.log(`EPD Year filter excluded: ${location.product}, year: ${location.refYear}, range: [${yearRange[0]}, ${yearRange[1]}]`);
+                epdMarkersFilteredByYear++;
+              }
+            }
+            // Non-EPD markers and non-EPD API markers are not filtered by year when filterEpdOnly is true
+          } else {
+            // If filterEpdOnly is false, apply year filtering to all markers
+            const refYearNum = location.refYear && location.refYear !== "all" ? parseInt(location.refYear) : null;
+            yearMatch = 
+              (location.refYear === "all" || 
+               (refYearNum && refYearNum >= yearRange[0] && refYearNum <= yearRange[1]));
+          }
+        }
 
         const productMatch =
           selectedProduct === "all" ||
@@ -369,11 +413,34 @@ const MapComponent = forwardRef(
       } else {
         console.log('Sample filtered location:', filtered[0]);
       }
+      
+      // Log EPD filtering statistics
+      if (filterEpdOnly && yearRange[0] !== "all" && yearRange[1] !== "all") {
+        console.log(`EPD filtering statistics: ${totalEpdMarkers - epdMarkersFilteredByYear}/${totalEpdMarkers} EPD markers within year range [${yearRange[0]}, ${yearRange[1]}]`);
+      }
 
-      return filtered;
-    };
+      return { 
+        filtered, 
+        epdStats: { 
+          total: totalEpdMarkers, 
+          filtered: totalEpdMarkers - epdMarkersFilteredByYear 
+        } 
+      };
+    }, [locations, filteredProductsList, selectedProductContext, yearRange, filterEpdOnly, selectedCountry, selectedProduct, selectedCategory]);
 
-    const filteredLocations = getFilteredLocations();
+    const { filtered: filteredLocations, epdStats } = useMemo(() => 
+      getFilteredLocations(), 
+      [getFilteredLocations]
+    );
+    
+    // Update EPD filter stats state using useEffect to avoid render loops
+    useEffect(() => {
+      // Only update if the values are actually different to avoid render loops
+      if (epdStats.total !== epdFilterStats.total || epdStats.filtered !== epdFilterStats.filtered) {
+        setEpdFilterStats(epdStats);
+      }
+    }, [epdStats, epdFilterStats]);
+    
     const distributedLocations = useMemo(
       () => getDistributedLocations(filteredLocations, zoom),
       [filteredLocations, zoom]
@@ -519,6 +586,66 @@ const MapComponent = forwardRef(
           <TileLayer 
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" 
           />
+          
+          {/* Filter status indicators */}
+          <div style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            zIndex: 999,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '5px'
+          }}>
+            {filterEpdOnly && (
+              <div style={{
+                background: 'rgba(0, 137, 123, 0.8)',
+                color: 'white',
+                padding: '6px 12px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                cursor: 'help',
+                position: 'relative'
+              }}
+              title="Showing only Environmental Product Declaration (EPD) markers from the EPD database"
+              >
+                <span style={{ marginRight: '5px' }}>EPD Explorer Mode</span>
+                <span style={{ 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  background: '#ffffff',
+                  display: 'inline-block',
+                  animation: 'pulse 1.5s infinite'
+                }}></span>
+              </div>
+            )}
+            {filterEpdOnly && yearRange[0] !== "all" && yearRange[1] !== "all" && (
+              <div style={{
+                background: 'rgba(0, 137, 123, 0.8)',
+                color: 'white',
+                padding: '6px 12px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+              }}>
+                <span>EPD API Year Filter: {yearRange[0]} - {yearRange[1]}</span>
+                {epdFilterStats.total > 0 && (
+                  <span style={{ marginLeft: '8px', background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '8px' }}>
+                    {epdFilterStats.filtered}/{epdFilterStats.total} EPDs
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           {distributedLocations.length === 0 && !isLoading && (
             <div style={{
               position: 'absolute',
@@ -583,9 +710,16 @@ const MapComponent = forwardRef(
                       {isSelected && <span style={{ color: "red" }}> ★ Selected</span>}
                     </p>
                     {location.isEpd && (
-                      <p>
-                        <strong>Type:</strong> {location.isEpd}
-                      </p>
+                      <>
+                        <p>
+                          <strong>Type:</strong> {location.isEpd}
+                        </p>
+                        {location.refYear && location.refYear !== "all" && (
+                          <p>
+                            <strong>EPD Year:</strong> {location.refYear}
+                          </p>
+                        )}
+                      </>
                     )}
                     {location.description && (
                       <p>
@@ -644,6 +778,17 @@ const MapComponent = forwardRef(
           }
           .leaflet-svg-pane {
             z-index: 700 !important;
+          }
+          @keyframes pulse {
+            0% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.2);
+            }
+            100% {
+              transform: scale(1);
+            }
           }
         `}</style>
       </>

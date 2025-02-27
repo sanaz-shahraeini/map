@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   TextField,
@@ -43,9 +43,16 @@ const SearchBar = ({ mapRef }) => {
   const {
     searchResults,
     setSearchQuery: setContextSearchQuery,
+    searchQuery: contextSearchQuery,
     isLoading,
     markerSelected,
   } = useSearch();
+
+  // Synchronize local state with context
+  useEffect(() => {
+    setSearchQuery(contextSearchQuery);
+    setShowResults(contextSearchQuery.length > 0);
+  }, [contextSearchQuery]);
 
   const filteredProducts = searchResults || [];
 

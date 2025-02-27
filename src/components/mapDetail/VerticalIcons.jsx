@@ -12,47 +12,59 @@ import {
   Badge,
   Avatar,
   Chip,
-  Divider
+  Divider,
 } from "@mui/material";
-import PersonIcon from "@mui/icons-material/Person";
-import MenuIcon from "@mui/icons-material/Menu";
-import ViewInArIcon from '@mui/icons-material/ViewInAr';
-import CategoryIcon from '@mui/icons-material/Category';
-import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import DescriptionIcon from '@mui/icons-material/Description';
-import SearchIcon from '@mui/icons-material/Search';
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import TravelExploreIcon from "@mui/icons-material/TravelExplore";
 import { useProducts } from "../../useContexts/ProductsContext";
 import { useSearch } from "../../useContexts/SearchContext";
 import { styled } from "@mui/material/styles";
 
-// Modern styled category indicator
+// Modern styled category indicator with animation
 const CategoryIndicator = styled(Box)(({ selected }) => ({
-  width: '4px',
-  height: selected ? '28px' : '0',
-  backgroundColor: '#00897B',
-  borderRadius: '0 3px 3px 0',
-  position: 'absolute',
+  width: "3px",
+  height: selected ? "32px" : "0",
+  background: selected
+    ? "linear-gradient(180deg, #00897B 0%, #4DB6AC 100%)"
+    : "transparent",
+  borderRadius: "0 4px 4px 0",
+  position: "absolute",
   left: 0,
-  transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  opacity: selected ? 1 : 0,
+  transform: selected ? "translateX(0)" : "translateX(-3px)",
 }));
 
-// Styled category icon - smaller and lighter when selected
+// Enhanced styled category icon with modern effects
 const StyledCategoryIcon = styled(Box)(({ selected }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '32px',
-  height: '32px',
-  borderRadius: '8px',
-  backgroundColor: selected ? 'rgba(0, 137, 123, 0.12)' : 'rgba(178, 223, 219, 0.08)',
-  color: selected ? '#4DB6AC' : '#26A69A',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  transform: selected ? 'scale(0.95)' : 'scale(1)',
-  boxShadow: selected ? '0 1px 3px rgba(0, 137, 123, 0.1)' : 'none',
-  '& .MuiSvgIcon-root': {
-    fontSize: '18px',
-  }
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "36px",
+  height: "36px",
+  borderRadius: "12px",
+  backgroundColor: selected
+    ? "rgba(0, 137, 123, 0.15)"
+    : "rgba(178, 223, 219, 0.08)",
+  color: selected ? "#00897B" : "#26A69A",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  transform: selected ? "scale(1)" : "scale(0.95)",
+  boxShadow: selected
+    ? "0 2px 8px rgba(0, 137, 123, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)"
+    : "none",
+  "& .MuiSvgIcon-root": {
+    fontSize: "22px",
+    transition: "all 0.3s ease",
+    filter: selected ? "drop-shadow(0 2px 3px rgba(0, 137, 123, 0.2))" : "none",
+  },
+  "&:hover .MuiSvgIcon-root": {
+    transform: "scale(1.1) rotate(5deg)",
+  },
 }));
 
 // Enhanced styled category button with glass morphism
@@ -61,27 +73,30 @@ const CategoryButton = styled(Box)(({ selected }) => ({
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  padding: "10px 5px",
-  margin: "6px 0",
+  padding: "12px 6px",
+  margin: "4px 0",
   cursor: "pointer",
   position: "relative",
-  transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-  borderRadius: "12px",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  borderRadius: "16px",
   backgroundColor: selected ? "rgba(0, 137, 123, 0.08)" : "transparent",
   backdropFilter: selected ? "blur(8px)" : "none",
-  boxShadow: selected ? "0 2px 8px rgba(0, 137, 123, 0.08)" : "none",
-  width: "52px",
-  height: "58px",
+  boxShadow: selected
+    ? "0 4px 12px rgba(0, 137, 123, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.1)"
+    : "none",
+  width: "56px",
+  height: "64px",
   "&:hover": {
     backgroundColor: "rgba(0, 137, 123, 0.05)",
-    transform: "translateY(-1px)",
-    boxShadow: "0 4px 12px rgba(0, 137, 123, 0.08)",
+    transform: "translateY(-2px)",
+    boxShadow: "0 6px 16px rgba(0, 137, 123, 0.15)",
     "& .category-icon": {
-      transform: "scale(1.05)",
+      transform: "scale(1.08)",
     },
     "& .category-label": {
       opacity: 1,
       transform: "translateY(0)",
+      color: "#00796B",
     },
   },
 }));
@@ -94,7 +109,7 @@ const VerticalIcons = ({
   categories,
   setSelectedSidebar,
   setFilterEpdOnly,
-  filterEpdOnly
+  filterEpdOnly,
 }) => {
   const { loading, error, allProducts } = useProducts();
   const { setSearchQuery } = useSearch();
@@ -105,16 +120,32 @@ const VerticalIcons = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [totalProducts, setTotalProducts] = useState(0);
 
-  const findTopCategories = useCallback((categories) => {
-    const frequencyMap = {};
-    categories.forEach((category) => {
-      frequencyMap[category] = (frequencyMap[category] || 0) + 1;
-    });
-    return Object.entries(frequencyMap)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 4)
-      .map(([category, count]) => ({ name: category, count }));
-  }, []);
+  const findTopCategories = useCallback(
+    (categories) => {
+      if (!allProducts) return [];
+
+      const frequencyMap = {};
+      allProducts.forEach((product) => {
+        const categories = (
+          product.category_name ||
+          product.classific ||
+          "Uncategorized"
+        )
+          .split(" / ")
+          .map((category) => category.trim());
+
+        categories.forEach((category) => {
+          frequencyMap[category] = (frequencyMap[category] || 0) + 1;
+        });
+      });
+
+      return Object.entries(frequencyMap)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 4)
+        .map(([category, count]) => ({ name: category, count }));
+    },
+    [allProducts]
+  );
 
   useEffect(() => {
     if (!loading && !error) {
@@ -153,10 +184,10 @@ const VerticalIcons = ({
     setSelectedSidebar("Products");
     // Always open sidebar when category is clicked
     toggleSidebar();
-    
+
     // Clear the search query when a category is selected
     setSearchQuery("");
-    
+
     // If user clicks on a category, make sure EPD filter is turned off
     // to show all markers from both APIs
     setFilterEpdOnly(false);
@@ -175,9 +206,11 @@ const VerticalIcons = ({
   // Get color based on category name (consistent coloring)
   const getCategoryColor = (name) => {
     if (name === "all") return "#00796B";
-    
+
     // Generate consistent colors based on string hashing
-    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = name
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const colors = [
       "#00796B", // teal 700
       "#00897B", // teal 600
@@ -188,7 +221,7 @@ const VerticalIcons = ({
       "#00796B", // teal 700
       "#00897B", // teal 600
     ];
-    
+
     return colors[hash % colors.length];
   };
 
@@ -220,16 +253,19 @@ const VerticalIcons = ({
         "&::-webkit-scrollbar-thumb:hover": {
           background: "rgba(0, 137, 123, 0.4)",
         },
+        "& .MuiTooltip-popper": {
+          zIndex: 10001,
+        },
       }}
     >
       {/* Logo/Profile area at top */}
-      <Box 
-        sx={{ 
-          mb: 3, 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center',
-          position: 'relative'
+      <Box
+        sx={{
+          mb: 3,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          position: "relative",
         }}
       >
         <Tooltip
@@ -237,34 +273,41 @@ const VerticalIcons = ({
           placement="right"
           TransitionComponent={Zoom}
           arrow
+          PopperProps={{
+            sx: {
+              zIndex: 99999,
+            },
+          }}
         >
           <Avatar
             sx={{
               width: "48px",
               height: "48px",
               backgroundColor: "#00897B",
-              cursor: 'pointer',
+              cursor: "pointer",
               transition: "all 0.3s ease",
               boxShadow: "0 4px 12px rgba(0, 137, 123, 0.25)",
               "&:hover": {
-                transform: "scale(1.05)",
+                transform: "scale(1.15)",
                 boxShadow: "0 6px 16px rgba(0, 137, 123, 0.3)",
               },
             }}
           >
-            <PersonIcon sx={{ color: "#ffffff", fontSize: "24px" }} />
+            <AccountCircleOutlinedIcon
+              sx={{ color: "#ffffff", fontSize: "28px" }}
+            />
           </Avatar>
         </Tooltip>
-        
+
         {/* App name/brand below avatar */}
-        <Typography 
-          variant="subtitle2" 
-          sx={{ 
-            mt: 1.5, 
-            fontSize: '11px', 
-            color: '#00897B',
+        <Typography
+          variant="subtitle2"
+          sx={{
+            mt: 1.5,
+            fontSize: "11px",
+            color: "#00897B",
             fontWeight: 600,
-            letterSpacing: '0.5px'
+            letterSpacing: "0.5px",
           }}
         >
           USER
@@ -272,57 +315,90 @@ const VerticalIcons = ({
       </Box>
 
       {/* Category section */}
-      <Box sx={{ 
-        width: '100%', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        justifyContent: 'center',
-        flex: 1
-      }}>
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "40px",
+            height: "2px",
+            background:
+              "linear-gradient(90deg, transparent, rgba(0, 137, 123, 0.2), transparent)",
+          },
+        }}
+      >
         {/* "Categories" Label */}
         <Typography
           variant="caption"
           sx={{
-            color: '#00796B',
-            fontWeight: 600,
-            fontSize: { xs: '10px', sm: '11px' },
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            textAlign: 'center',
-            display: 'block',
-            mb: 1
+            color: "#00796B",
+            fontWeight: 700,
+            fontSize: { xs: "11px", sm: "12px" },
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            textAlign: "center",
+            display: "block",
+            mb: 2,
+            position: "relative",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              bottom: "-6px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "16px",
+              height: "2px",
+              backgroundColor: "#00897B",
+              borderRadius: "2px",
+            },
           }}
         >
           Categories
         </Typography>
 
-        <List sx={{ 
-          width: "100%", 
-          p: 0, 
-          mt: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
+        <List
+          sx={{
+            width: "100%",
+            p: 0,
+            mt: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {/* All Categories button */}
           <Tooltip
             title="All Categories"
             placement="right"
             TransitionComponent={Zoom}
             arrow
+            PopperProps={{
+              sx: {
+                zIndex: 99999,
+              },
+            }}
           >
             <CategoryButton
               selected={selectedCategory === "all"}
               onClick={() => {
                 handleCategoryClick("all");
-                // Ensure both API markers are shown when clicking All
                 setFilterEpdOnly(false);
               }}
             >
               <CategoryIndicator selected={selectedCategory === "all"} />
               <StyledCategoryIcon selected={selectedCategory === "all"}>
-                <AllInclusiveIcon fontSize="small" />
+                <AutoAwesomeRoundedIcon />
               </StyledCategoryIcon>
               <Typography
                 className="category-label"
@@ -339,51 +415,41 @@ const VerticalIcons = ({
             </CategoryButton>
           </Tooltip>
 
+          {/* Category list */}
           {topCategories.map((category) => (
             <Tooltip
               key={category.name}
-              title={`${category.name} (${category.count})`}
+              title={category.name}
               placement="right"
               TransitionComponent={Zoom}
               arrow
+              PopperProps={{
+                sx: {
+                  zIndex: 99999,
+                },
+              }}
             >
               <CategoryButton
                 selected={selectedCategory === category.name}
                 onClick={() => handleCategoryClick(category.name)}
               >
-                <CategoryIndicator selected={selectedCategory === category.name} />
-                <Badge
-                  badgeContent={category.count}
-                  color="primary"
-                  sx={{ 
-                    '& .MuiBadge-badge': {
-                      backgroundColor: '#00897B',
-                      fontSize: '8px',
-                      minWidth: '14px',
-                      height: '14px',
-                      top: -2,
-                      right: -2,
-                    }
-                  }}
+                <CategoryIndicator
+                  selected={selectedCategory === category.name}
+                />
+                <StyledCategoryIcon
+                  selected={selectedCategory === category.name}
                 >
-                  <StyledCategoryIcon 
-                    selected={selectedCategory === category.name}
-                    sx={{
-                      background: selectedCategory === category.name 
-                        ? 'rgba(0, 137, 123, 0.12)' 
-                        : 'rgba(178, 223, 219, 0.08)',
-                      color: selectedCategory === category.name ? '#4DB6AC' : getCategoryColor(category.name),
-                    }}
-                  >
-                    {getCategoryInitial(category.name)}
-                  </StyledCategoryIcon>
-                </Badge>
+                  <CategoryRoundedIcon />
+                </StyledCategoryIcon>
                 <Typography
                   className="category-label"
                   variant="caption"
                   sx={{
                     mt: 0.5,
-                    color: selectedCategory === category.name ? "#00796B" : "#26A69A",
+                    color:
+                      selectedCategory === category.name
+                        ? "#00796B"
+                        : "#26A69A",
                     fontWeight: selectedCategory === category.name ? 600 : 500,
                     fontSize: { xs: "9px", sm: "10px" },
                     maxWidth: "90%",
@@ -393,80 +459,68 @@ const VerticalIcons = ({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {category.name.length > 8 ? `${category.name.substring(0, 7)}...` : category.name}
+                  {category.name.length > 8
+                    ? `${category.name.substring(0, 7)}...`
+                    : category.name}
                 </Typography>
               </CategoryButton>
             </Tooltip>
           ))}
         </List>
-      </Box>
 
-      {errorState && (
-        <Typography
-          color="error"
-          sx={{ position: "absolute", bottom: 16, fontSize: "12px" }}
-        >
-          {errorState}
-        </Typography>
-      )}
-
-      {/* EPD Explorer button at the bottom */}
-      <Box sx={{ 
-        mt: 'auto', 
-        mb: { xs: 4, sm: 6 }, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        width: '100%',
-        pt: 2
-      }}>
-        <Divider sx={{ width: '80%', mb: 2 }} />
-        <Typography
-          variant="caption"
+        {/* Separator before EPD Explorer */}
+        <Box
           sx={{
-            color: '#00796B',
-            fontWeight: 600,
-            fontSize: { xs: '10px', sm: '11px' },
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            textAlign: 'center',
-            display: 'block',
-            mb: 1
+            width: "40px",
+            height: "1px",
+            background:
+              "linear-gradient(90deg, transparent, rgba(0, 137, 123, 0.2), transparent)",
+            my: 2,
           }}
-        >
-          Explorer
-        </Typography>
+        />
+
+        {/* EPD Explorer button */}
         <Tooltip
-          title="EPD Explorer - Show Environmental Product Declarations"
+          title="EPD Explorer"
           placement="right"
           TransitionComponent={Zoom}
           arrow
+          PopperProps={{
+            sx: {
+              zIndex: 99999,
+            },
+          }}
         >
           <CategoryButton
             selected={filterEpdOnly}
             onClick={() => {
-              // Toggle EPD filter
               setFilterEpdOnly(!filterEpdOnly);
-              // Reset search and category when toggling EPD mode
               setSearchQuery("");
               setSelectedCategory("all");
               toggleSidebar();
               setSelectedSidebar("Products");
             }}
             sx={{
-              background: filterEpdOnly ? 'linear-gradient(135deg, rgba(0, 121, 107, 0.08), rgba(0, 150, 136, 0.05))' : 'transparent',
-              border: filterEpdOnly ? '1px solid rgba(0, 137, 123, 0.08)' : 'none',
+              background: filterEpdOnly
+                ? "linear-gradient(135deg, rgba(0, 121, 107, 0.08), rgba(0, 150, 136, 0.05))"
+                : "transparent",
+              border: filterEpdOnly
+                ? "1px solid rgba(0, 137, 123, 0.08)"
+                : "none",
+              mt: 0,
             }}
           >
             <CategoryIndicator selected={filterEpdOnly} />
-            <StyledCategoryIcon 
+            <StyledCategoryIcon
               selected={filterEpdOnly}
               sx={{
-                background: filterEpdOnly ? 'rgba(0, 137, 123, 0.12)' : 'rgba(178, 223, 219, 0.08)',
-                color: filterEpdOnly ? '#4DB6AC' : '#26A69A',
+                background: filterEpdOnly
+                  ? "rgba(0, 137, 123, 0.12)"
+                  : "rgba(178, 223, 219, 0.08)",
+                color: filterEpdOnly ? "#4DB6AC" : "#26A69A",
               }}
             >
-              <SearchIcon fontSize="small" />
+              <TravelExploreIcon />
             </StyledCategoryIcon>
             <Typography
               className="category-label"
@@ -483,6 +537,15 @@ const VerticalIcons = ({
           </CategoryButton>
         </Tooltip>
       </Box>
+
+      {errorState && (
+        <Typography
+          color="error"
+          sx={{ position: "absolute", bottom: 16, fontSize: "12px" }}
+        >
+          {errorState}
+        </Typography>
+      )}
     </Box>
   );
 
@@ -496,7 +559,7 @@ const VerticalIcons = ({
           position: "fixed",
           top: "10px",
           left: "10px",
-          zIndex: 1000,
+          zIndex: 10000,
           backgroundColor: "white",
           boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
           "&:hover": {
@@ -504,7 +567,7 @@ const VerticalIcons = ({
           },
         }}
       >
-        <MenuIcon />
+        <MenuRoundedIcon />
       </IconButton>
 
       {/* Drawer for mobile view */}
@@ -518,6 +581,9 @@ const VerticalIcons = ({
             width: "70px",
             boxSizing: "border-box",
           },
+          "& .MuiTooltip-popper": {
+            zIndex: 10001,
+          },
         }}
       >
         <SidebarContent />
@@ -528,6 +594,9 @@ const VerticalIcons = ({
         sx={{
           display: { xs: "none", sm: "block" },
           height: "100%",
+          "& .MuiTooltip-popper": {
+            zIndex: 10001,
+          },
         }}
       >
         <SidebarContent />

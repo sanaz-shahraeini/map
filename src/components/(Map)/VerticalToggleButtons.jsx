@@ -264,7 +264,12 @@ export default function VerticalToggleButtons({
       icon: <ShareIcon />,
       action: () => setOpenShareDialog(true),
     },
-    { value: "info", icon: <InfoIcon />, action: () => setShowInfoCard(true) },
+    {
+      value: "info",
+      icon: <InfoIcon />,
+      action: () => setShowInfoCard((prev) => !prev),
+      selected: showInfoCard,
+    },
     { value: "settings", icon: <SettingsIcon /> },
     { value: "help", icon: <HelpIcon /> },
   ];
@@ -315,12 +320,13 @@ export default function VerticalToggleButtons({
           }),
         }}
       >
-        {buttons.map(({ value, icon, action }) => (
+        {buttons.map(({ value, icon, action, selected }) => (
           <ToggleButton
             key={value}
             value={value}
             aria-label={value}
             onClick={action}
+            selected={selected}
             sx={{
               ...(isMobile ? { padding: "4px" } : {}),
               "&:hover": {
@@ -336,7 +342,7 @@ export default function VerticalToggleButtons({
           >
             {React.cloneElement(icon, {
               sx: {
-                color: "#00897B",
+                color: selected ? "#00695C" : "#00897B",
                 ...(isMobile && { fontSize: "small" }),
                 transition: "all 0.2s ease",
               },
@@ -422,109 +428,6 @@ export default function VerticalToggleButtons({
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Floating Info Card */}
-      <Fade in={showInfoCard} timeout={800}>
-        <Paper
-          elevation={3}
-          sx={{
-            position: "absoloute",
-            top: isMobile ? "auto" : "400px",
-            left: isMobile ? "50%" : "535px",
-          
-            bottom: isMobile ? "80px" : "300px",
-            transform: isMobile ? "translateX(-50%)" : "none",
-            width: isMobile ? "90%" : "280px",
-            borderRadius: "16px",
-            padding: "20px",
-            background: "rgba(255, 255, 255, 0.9)",
-            backdropFilter: "blur(10px)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-            zIndex: 10,
-            transition: "all 0.3s ease",
-            "&:hover": {
-              boxShadow: "0 12px 48px rgba(0, 0, 0, 0.15)",
-              transform: isMobile
-                ? "translateX(-50%) translateY(-5px)"
-                : "translateY(-5px)",
-            },
-            display: isMobile && isSidebarOpen ? "none" : "block",
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ color: "#00897B", fontWeight: 600, mb: 2 }}
-          >
-            Global Product Map
-          </Typography>
-
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ color: "#555", mb: 1 }}>
-              Currently viewing:
-            </Typography>
-            <Chip
-              label={selectedCountry || "All Countries"}
-              size="small"
-              sx={{
-                mr: 1,
-                mb: 1,
-                backgroundColor: "#E0F2F1",
-                color: "#00897B",
-                fontWeight: 500,
-              }}
-            />
-            <Chip
-              label={selectedProduct || "All Products"}
-              size="small"
-              sx={{
-                mr: 1,
-                mb: 1,
-                backgroundColor: "#E0F2F1",
-                color: "#00897B",
-                fontWeight: 500,
-              }}
-            />
-            <Chip
-              label={selectedCategory || "All Categories"}
-              size="small"
-              sx={{
-                mr: 1,
-                mb: 1,
-                backgroundColor: "#E0F2F1",
-                color: "#00897B",
-                fontWeight: 500,
-              }}
-            />
-          </Box>
-
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ color: "#555", mb: 1 }}>
-              Year Range:
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              {yearRange
-                ? `${yearRange[0]} - ${yearRange[1]}`
-                : "No year range selected"}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "#00897B",
-                cursor: "pointer",
-                "&:hover": {
-                  textDecoration: "underline",
-                },
-              }}
-              onClick={() => setShowInfoCard(false)}
-            >
-              Hide this card
-            </Typography>
-          </Box>
-        </Paper>
-      </Fade>
     </div>
   );
 }

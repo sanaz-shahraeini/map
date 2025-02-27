@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Button,
@@ -17,6 +17,7 @@ import Sidebar from "./Sidebar";
 import FilteredInfoSection from "./FilteredInfoSection";
 import ImageIcon from "@mui/icons-material/Image";
 import Grid from "@mui/material/Grid2";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
 
 const MainSidebar = ({
   selected,
@@ -38,49 +39,70 @@ const MainSidebar = ({
   const [filteredExtraInfo, setFilteredExtraInfo] = useState([]);
   const [showLastProduct, setShowLastProduct] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPriority, setSelectedPriority] = useState("Top products");
+  const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if the click is on any interactive elements
+      const isInteractiveElement =
+        event.target.closest(".MuiSelect-root") ||
+        event.target.closest(".MuiPopover-root") ||
+        event.target.closest(".MuiMenuItem-root") ||
+        event.target.closest(".MuiButton-root") ||
+        event.target.closest("[role='button']") ||
+        event.target.closest("[role='tab']") ||
+        event.target.closest(".MuiPaper-root");
+
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target) &&
+        !isInteractiveElement
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [setIsSidebarOpen]);
 
   // Fetch products data
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
-        const [response1, response2] = await Promise.all([
-          fetch("https://epd-fullstack-project.vercel.app/api/products/"),
-          fetch("https://epd-fullstack-project.vercel.app/api/ibudata/"),
-        ]);
-
-        if (!response1.ok || !response2.ok) {
-          throw new Error(
-            `HTTP error! statuses: ${response1.status}, ${response2.status}`
-          );
+        // Fetch EPD products
+        const response = await fetch(
+          "https://epd-fullstack-project.vercel.app/api/ibudata/"
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        console.log("EPD API response:", data);
 
-        const data1 = await response1.json();
-        const data2 = await response2.json();
-
-        // Mark EPD data explicitly for filtering
-        const productsData = data1.results.map(item => ({
-          ...item,
-          isFromRegularAPI: true
-        }));
-        
-        const epdData = data2.results.map(item => ({
-          ...item,
-          type: "EPD", // Mark as EPD type
-          isFromEPDAPI: true
-        }));
-
-        const combinedResults = [...productsData, ...epdData];
-
-        const formattedProducts = combinedResults.map((item) => ({
-          category_name: item.category_name || item.classific || null,
-          name: item.product_name || item.name || "No name specified",
-          industry_solution:
-            item.industry_solution || item.type || "No solution specified",
-          image_url: item.image_url || null,
+        // Format EPD products
+        const epdProducts = (data.results || []).map((item) => ({
+          category_name: item.classific || null,
+          name: item.name || "No name specified",
+          industry_solution: "EPD Product",
+          image_url: null,
+          description: null,
+          pdf_url: item.pdf_url || null,
+          geo: item.geo || null,
+          company_name: null,
+          created_at: null,
+          isFromEPDAPI: true,
+          type: "EPD",
+          ref_year: item.ref_year,
+          uuid: item.uuid,
         }));
 
-        setProducts(formattedProducts);
+        console.log("Formatted EPD products:", epdProducts);
+        setProducts(epdProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
         setError("Error fetching products");
@@ -91,6 +113,12 @@ const MainSidebar = ({
 
     fetchProducts();
   }, []);
+
+  // Handle priority change
+  const handlePriorityChange = (event) => {
+    event.stopPropagation();
+    setSelectedPriority(event.target.value);
+  };
 
   // Remove a specific filter
   const handleRemoveInfo = (index) => {
@@ -127,26 +155,53 @@ const MainSidebar = ({
     ]);
   };
 
-  // Filter products based on selected category
-  const filteredProducts = products.filter((product) => {
-    if (selectedCategory === "all") return true;
-    const productCategories = (product.category_name || "").split(" / ");
-    return productCategories.includes(selectedCategory);
-  });
+  // Filter and sort products based on selected category and priority
+  const getFilteredAndSortedProducts = () => {
+    console.log("Current products:", products);
+    console.log("Selected category:", selectedCategory);
 
-  // Filter products to only include EPD data
-  const epdProducts = filteredProducts.filter(product => product.isFromEPDAPI);
+    let filtered = products;
+
+    // Filter by category if one is selected
+    if (selectedCategory && selectedCategory !== "all") {
+      filtered = filtered.filter((product) => {
+        // Get the first part of the category (e.g., "02 Bauprodukte" from "02 Bauprodukte / Metallbauprodukte...")
+        const mainCategory = (product.category_name || "")
+          .split(" / ")[0]
+          .toLowerCase();
+        const selectedMainCategory = selectedCategory.toLowerCase();
+
+        // Check if the main category contains the selected category
+        return mainCategory.includes(selectedMainCategory);
+      });
+    }
+
+    // Sort based on priority
+    if (selectedPriority === "New arrivals") {
+      filtered = filtered.sort((a, b) => {
+        const yearA = a.ref_year || 0;
+        const yearB = b.ref_year || 0;
+        return yearB - yearA;
+      });
+    }
+
+    console.log("Filtered products:", filtered);
+    return filtered;
+  };
+
+  const regularProducts = getFilteredAndSortedProducts();
 
   // Function to handle image errors
   const handleImageError = (e) => {
     e.target.onerror = null;
-    e.target.style.display = 'none';
-    e.target.parentNode.querySelector('.fallback-icon').style.display = 'flex';
+    e.target.style.display = "none";
+    e.target.parentNode.querySelector(".fallback-icon").style.display = "flex";
   };
 
   return (
     <>
       <Box
+        ref={sidebarRef}
         sx={{
           width: "128%",
           bgcolor: "#ffffff",
@@ -227,7 +282,23 @@ const MainSidebar = ({
             </Grid>
             <Grid size={{ xs: 6, md: 6 }}>
               <Select
-                defaultValue="Top products"
+                value={selectedPriority}
+                onChange={handlePriorityChange}
+                onClick={(e) => e.stopPropagation()}
+                onClose={(e) => e.stopPropagation()}
+                MenuProps={{
+                  anchorOrigin: {
+                    vertical: "bottom",
+                    horizontal: "left",
+                  },
+                  transformOrigin: {
+                    vertical: "top",
+                    horizontal: "left",
+                  },
+                  PaperProps: {
+                    onClick: (e) => e.stopPropagation(),
+                  },
+                }}
                 variant="outlined"
                 size="small"
                 fullWidth
@@ -241,8 +312,18 @@ const MainSidebar = ({
                   },
                 }}
               >
-                <MenuItem value="Top products">Top products</MenuItem>
-                <MenuItem value="New arrivals">New arrivals</MenuItem>
+                <MenuItem
+                  value="Top products"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Top products
+                </MenuItem>
+                <MenuItem
+                  value="New arrivals"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  New arrivals
+                </MenuItem>
               </Select>
             </Grid>
           </Grid>
@@ -256,15 +337,20 @@ const MainSidebar = ({
                 // Display skeletons while loading
                 Array.from(new Array(6)).map((_, index) => (
                   <ListItem key={`skeleton-${index}`} sx={{ py: 1 }}>
-                    <Skeleton variant="rectangular" width={60} height={60} sx={{ mr: 2 }} />
-                    <Box sx={{ width: '100%' }}>
+                    <Skeleton
+                      variant="rectangular"
+                      width={60}
+                      height={60}
+                      sx={{ mr: 2 }}
+                    />
+                    <Box sx={{ width: "100%" }}>
                       <Skeleton width="70%" height={24} />
                       <Skeleton width="40%" height={20} />
                     </Box>
                   </ListItem>
                 ))
-              ) : epdProducts.length > 0 ? (
-                epdProducts.map((product, index) => (
+              ) : regularProducts.length > 0 ? (
+                regularProducts.map((product, index) => (
                   <React.Fragment key={`Product${index}`}>
                     <ListItem
                       sx={{
@@ -289,6 +375,10 @@ const MainSidebar = ({
                           borderRadius: "8px",
                           overflow: "hidden",
                           position: "relative",
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            backgroundColor: "#f0f0f0",
+                          },
                         }}
                       >
                         {product.image_url ? (
@@ -304,22 +394,42 @@ const MainSidebar = ({
                                 objectFit: "contain",
                               }}
                             />
-                            <Box 
+                            <Box
                               className="fallback-icon"
-                              sx={{ 
-                                display: 'none',
-                                position: 'absolute',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '100%',
-                                height: '100%'
+                              sx={{
+                                display: "none",
+                                position: "absolute",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "100%",
+                                height: "100%",
+                                background:
+                                  "linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)",
+                                color: "#00897B",
                               }}
                             >
-                              <ImageIcon sx={{ color: "#656959", fontSize: "35px" }} />
+                              <ViewInArIcon sx={{ fontSize: "28px" }} />
                             </Box>
                           </>
                         ) : (
-                          <ImageIcon sx={{ color: "#656959", fontSize: "35px" }} />
+                          <Box
+                            sx={{
+                              width: "100%",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background:
+                                "linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)",
+                              color: "#00897B",
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                transform: "scale(1.05)",
+                              },
+                            }}
+                          >
+                            <ViewInArIcon sx={{ fontSize: "28px" }} />
+                          </Box>
                         )}
                       </Box>
 
@@ -328,11 +438,11 @@ const MainSidebar = ({
                           primary={product.name}
                           secondary={product.industry_solution}
                           primaryTypographyProps={{
-                            sx: { 
+                            sx: {
                               fontWeight: 500,
-                              color: '#424242', 
-                              fontSize: '15px'
-                            }
+                              color: "#424242",
+                              fontSize: "15px",
+                            },
                           }}
                           secondaryTypographyProps={{
                             sx: { color: "#666", fontSize: "14px" },
@@ -344,13 +454,13 @@ const MainSidebar = ({
                         <InfoOutlinedIcon sx={{ color: "#4DB6AC" }} />
                       </IconButton>
                     </ListItem>
-                    {index < epdProducts.length - 1 && (
+                    {index < regularProducts.length - 1 && (
                       <Divider sx={{ width: "100%", bgcolor: "#e0e0e0" }} />
                     )}
                   </React.Fragment>
                 ))
               ) : (
-                <Typography variant="body1" sx={{ p: 2, color: '#666' }}>
+                <Typography variant="body1" sx={{ p: 2, color: "#666" }}>
                   No products found for this category.
                 </Typography>
               )}

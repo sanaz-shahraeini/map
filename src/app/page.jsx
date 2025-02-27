@@ -15,6 +15,7 @@ import MainSidebar from "../components/(Slider)/MainSidebar";
 import VerticalIcons from "../components/mapDetail/VerticalIcons";
 import SearchBar from "../components/mapDetail/SearchBar";
 import countryCoordinates from "../../public/data/countryCoordinates.jsx";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
 
 // Import components dynamically to ensure they only load on the client
 const VerticalToggleButtons = dynamic(
@@ -43,7 +44,7 @@ const IndexPage = () => {
   const [topCategories, setTopCategories] = useState([]);
   const [mapZoom, setMapZoom] = useState(3);
   const [showInfoCard, setShowInfoCard] = useState(true);
-  const [filterEpdOnly, setFilterEpdOnly] = useState(true);
+  const [filterEpdOnly, setFilterEpdOnly] = useState(false);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(true);
@@ -51,6 +52,11 @@ const IndexPage = () => {
 
   const closeSidebar = () => {
     setIsSidebarOpen(false);
+  };
+
+  const handleSidebarSelect = (tab) => {
+    setSelectedSidebar(tab);
+    setIsSidebarOpen(true);
   };
 
   return (
@@ -82,7 +88,7 @@ const IndexPage = () => {
               sx={{
                 position: "relative",
                 height: "100%",
-                zIndex: 9999,
+                zIndex: 9990,
                 width: { xs: "70px", sm: "80px" },
               }}
             >
@@ -92,7 +98,7 @@ const IndexPage = () => {
                 selectedCategory={selectedCategory}
                 setCategories={setCategories}
                 categories={categories}
-                setSelectedSidebar={setSelectedSidebar}
+                setSelectedSidebar={handleSidebarSelect}
                 setFilterEpdOnly={setFilterEpdOnly}
                 filterEpdOnly={filterEpdOnly}
               />
@@ -198,7 +204,7 @@ const IndexPage = () => {
                   position: "fixed",
                   bottom: "20px",
                   right: "20px",
-                  zIndex: 900,
+                  zIndex: 1000,
                 }}
               >
                 <Suspense fallback={<div>Loading...</div>}>
@@ -215,6 +221,155 @@ const IndexPage = () => {
                   />
                 </Suspense>
               </Grid>
+
+              {/* Info Card */}
+              <Fade in={showInfoCard}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    position: "fixed",
+                    bottom: "90px",
+                    right: "90px",
+                    zIndex: 1000,
+                    padding: "20px",
+                    maxWidth: "350px",
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    backdropFilter: "blur(10px)",
+                    borderRadius: "12px",
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+                    border: "1px solid rgba(0, 137, 123, 0.1)",
+                    display: showInfoCard ? "block" : "none",
+                    transition: "opacity 0.3s ease-in-out",
+                    opacity: showInfoCard ? 1 : 0,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#00897B",
+                      mb: 2,
+                      fontSize: "18px",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <ViewInArIcon sx={{ fontSize: "24px" }} />
+                    Global Product Map
+                  </Typography>
+
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "#555", mb: 2, lineHeight: 1.6 }}
+                    >
+                      Welcome to the Global Product Map! Here you can explore
+                      products and Environmental Product Declarations (EPDs)
+                      across different categories and countries.
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: "#00897B", mb: 1, fontWeight: 600 }}
+                    >
+                      Current View
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      <Chip
+                        label={selectedCountry || "All Countries"}
+                        size="small"
+                        sx={{
+                          backgroundColor: "#E0F2F1",
+                          color: "#00897B",
+                          fontWeight: 500,
+                        }}
+                      />
+                      <Chip
+                        label={selectedProduct || "All Products"}
+                        size="small"
+                        sx={{
+                          backgroundColor: "#E0F2F1",
+                          color: "#00897B",
+                          fontWeight: 500,
+                        }}
+                      />
+                      <Chip
+                        label={selectedCategory || "All Categories"}
+                        size="small"
+                        sx={{
+                          backgroundColor: "#E0F2F1",
+                          color: "#00897B",
+                          fontWeight: 500,
+                        }}
+                      />
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: "#00897B", mb: 1, fontWeight: 600 }}
+                    >
+                      Time Period
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "#555" }}>
+                      Showing data from {yearRange[0]} to {yearRange[1]}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: "#00897B", mb: 1, fontWeight: 600 }}
+                    >
+                      Quick Tips
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "#555", mb: 1, fontSize: "13px" }}
+                    >
+                      • Click on countries to view specific data
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "#555", mb: 1, fontSize: "13px" }}
+                    >
+                      • Use the sidebar categories to filter products
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "#555", mb: 1, fontSize: "13px" }}
+                    >
+                      • Toggle EPD mode to focus on environmental declarations
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "#555", fontSize: "13px" }}
+                    >
+                      • Use zoom controls to adjust the map view
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "#00897B",
+                        cursor: "pointer",
+                        "&:hover": {
+                          textDecoration: "underline",
+                        },
+                      }}
+                      onClick={() => setShowInfoCard(false)}
+                    >
+                      Hide this card
+                    </Typography>
+                  </Box>
+                </Paper>
+              </Fade>
             </Grid>
           </Box>
         </Box>

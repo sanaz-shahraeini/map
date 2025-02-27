@@ -131,7 +131,7 @@ const SearchBar = ({ mapRef }) => {
   };
 
   // Group products by country for the modal display
-  const productsForModal = regularProducts || [];
+  const productsForModal = [...(regularProducts || []), ...(allProducts || [])];
 
   const groupedByCountry = Array.isArray(productsForModal)
     ? productsForModal.reduce((acc, product) => {
@@ -139,7 +139,12 @@ const SearchBar = ({ mapRef }) => {
         if (!acc[country]) {
           acc[country] = [];
         }
-        acc[country].push(product);
+        // Add a source flag to identify the product type
+        const productWithSource = {
+          ...product,
+          source: product.type === "EPD" ? "EPD" : "Regular",
+        };
+        acc[country].push(productWithSource);
         return acc;
       }, {})
     : {};
@@ -180,6 +185,7 @@ const SearchBar = ({ mapRef }) => {
       >
         <Grid
           xs={isMobile ? 8 : 9}
+          container={false}
           sx={{ marginRight: isMobile ? 0 : "8px", position: "relative" }}
         >
           <TextField
@@ -352,7 +358,7 @@ const SearchBar = ({ mapRef }) => {
         </Grid>
 
         <Grid
-          item
+          container={false}
           xs={isMobile ? 4 : 2}
           sx={{ display: "flex", alignItems: "center" }}
         >
@@ -466,7 +472,8 @@ const SearchBar = ({ mapRef }) => {
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    backgroundColor: "#ffffff",
+                    backgroundColor:
+                      product.source === "EPD" ? "#E8F5E9" : "#ffffff",
                     height: "75px",
                     paddingX: 2,
                     paddingY: 5,
@@ -477,7 +484,8 @@ const SearchBar = ({ mapRef }) => {
                     "&:hover": {
                       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
                       transform: "translateY(-2px)",
-                      backgroundColor: "#F5F5F5",
+                      backgroundColor:
+                        product.source === "EPD" ? "#C8E6C9" : "#F5F5F5",
                     },
                   }}
                 >
@@ -541,7 +549,8 @@ const SearchBar = ({ mapRef }) => {
                           width: "auto",
                           display: "flex",
                           alignItems: "center",
-                          backgroundColor: "#E0F2F1",
+                          backgroundColor:
+                            product.source === "EPD" ? "#C8E6C9" : "#E0F2F1",
                           padding: "5px 12px",
                           borderRadius: "20px",
                           marginBottom: 1,
@@ -549,16 +558,23 @@ const SearchBar = ({ mapRef }) => {
                       >
                         <StarIcon
                           sx={{
-                            color: "#00897B",
+                            color:
+                              product.source === "EPD" ? "#2E7D32" : "#00897B",
                             fontSize: "16px",
                             marginRight: 0.5,
                           }}
                         />
                         <Typography
                           variant="caption"
-                          sx={{ color: "#00897B", fontWeight: 600 }}
+                          sx={{
+                            color:
+                              product.source === "EPD" ? "#2E7D32" : "#00897B",
+                            fontWeight: 600,
+                          }}
                         >
-                          {product.type || "Product"}
+                          {product.source === "EPD"
+                            ? "EPD Product"
+                            : "Regular Product"}
                         </Typography>
                       </Box>
                       <Box
@@ -568,19 +584,19 @@ const SearchBar = ({ mapRef }) => {
                           justifyContent: "center",
                         }}
                       >
-                        {product.type === "EPD" && product.pdf_url ? (
+                        {product.source === "EPD" && product.pdf_url ? (
                           <Tooltip title="Download PDF">
                             <IconButton
                               onClick={() => handleDownload(product.pdf_url)}
                               sx={{
-                                backgroundColor: "#E0F2F1",
+                                backgroundColor: "#C8E6C9",
                                 "&:hover": {
-                                  backgroundColor: "#B2DFDB",
+                                  backgroundColor: "#A5D6A7",
                                 },
                                 transition: "all 0.2s ease",
                               }}
                             >
-                              <DownloadIcon sx={{ color: "#00897B" }} />
+                              <DownloadIcon sx={{ color: "#2E7D32" }} />
                             </IconButton>
                           </Tooltip>
                         ) : (
@@ -604,14 +620,25 @@ const SearchBar = ({ mapRef }) => {
                         <IconButton
                           sx={{
                             marginLeft: 1,
-                            backgroundColor: "#E0F2F1",
+                            backgroundColor:
+                              product.source === "EPD" ? "#C8E6C9" : "#E0F2F1",
                             "&:hover": {
-                              backgroundColor: "#B2DFDB",
+                              backgroundColor:
+                                product.source === "EPD"
+                                  ? "#A5D6A7"
+                                  : "#B2DFDB",
                             },
                             transition: "all 0.2s ease",
                           }}
                         >
-                          <InfoOutlinedIcon sx={{ color: "#00897B" }} />
+                          <InfoOutlinedIcon
+                            sx={{
+                              color:
+                                product.source === "EPD"
+                                  ? "#2E7D32"
+                                  : "#00897B",
+                            }}
+                          />
                         </IconButton>
                       </Box>
                     </Box>

@@ -48,7 +48,10 @@ const FilteredInfoSection = ({
 
             {/* دایره سبز پشت ضربدر */}
             <IconButton
-              onClick={() => handleRemoveInfo(index)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveInfo(index);
+              }}
               size="small"
               sx={{
                 ml: "auto",
@@ -99,7 +102,7 @@ const FilteredInfoSection = ({
           >
             <ImageIcon sx={{ color: "#656959", fontSize: "32px" }} />
           </Box>
-          <Box paddingLeft={"10px"}>
+          {/* <Box paddingLeft={"10px"}>
             <Typography
               variant="body2"
               sx={{ fontWeight: "bold", color: "#333" }}
@@ -109,7 +112,7 @@ const FilteredInfoSection = ({
             <Typography variant="caption" sx={{ color: "#999" }}>
               Lorem ipsum dolor sit amet
             </Typography>
-          </Box>
+          </Box> */}
 
           <IconButton
             size="small"
@@ -123,7 +126,10 @@ const FilteredInfoSection = ({
                 backgroundColor: "#00897B",
               },
             }}
-            onClick={handleRemoveLastProduct}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemoveLastProduct();
+            }}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -134,6 +140,3 @@ const FilteredInfoSection = ({
 };
 
 export default FilteredInfoSection;
-
-
-

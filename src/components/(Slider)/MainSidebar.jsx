@@ -154,8 +154,9 @@ const MainSidebar = ({
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          height: "70vh",
-          marginLeft: { xs: "-1%", md: "6%" },
+          height: "68vh",
+          marginLeft: { xs: "-1%", md: "9%" },
+          marginTop: "5px",
         }}
       >
         {/* Buttons */}

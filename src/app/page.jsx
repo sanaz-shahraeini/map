@@ -10,17 +10,19 @@ import {
   useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import MainSidebar from "../components/(Slider)/MainSidebar"
+import dynamic from "next/dynamic";
+import MainSidebar from "../components/(Slider)/MainSidebar";
 import VerticalIcons from "../components/mapDetail/VerticalIcons";
-// Import VerticalToggleButtons dynamically to ensure it only loads on the client
-import dynamic from 'next/dynamic';
-const VerticalToggleButtons = dynamic(
-  () => import('../components/(Map)/VerticalToggleButtons'),
-  { ssr: false } // This ensures the component only renders on the client
-);
 import SearchBar from "../components/mapDetail/SearchBar";
 import countryCoordinates from "../../public/data/countryCoordinates.jsx";
-import Map from "../components/(Map)/Map";
+
+// Import components dynamically to ensure they only load on the client
+const VerticalToggleButtons = dynamic(
+  () => import("../components/(Map)/VerticalToggleButtons"),
+  { ssr: false }
+);
+
+const Map = dynamic(() => import("../components/(Map)/Map"), { ssr: false });
 import Header from "../components/header/Header";
 import "../css/colors.css";
 import { SearchProvider } from "../useContexts/SearchContext";
@@ -54,29 +56,34 @@ const IndexPage = () => {
   return (
     <ProductsProvider>
       <SearchProvider>
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          height: '100vh',
-          backgroundColor: '#fafafa'
-        }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100vh",
+            backgroundColor: "#fafafa",
+          }}
+        >
           {/* Header */}
           <Header />
-          
+
           {/* Main Content */}
-          <Box sx={{ 
-            flexGrow: 1, 
-            mt: '64px', 
-            position: 'relative',
-            display: 'flex',
-            overflow: 'hidden'
-          }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              mt: "64px",
+              position: "relative",
+              display: "flex",
+              overflow: "hidden",
+            }}
+          >
             {/* Vertical Icons Sidebar */}
-            <Box 
-              sx={{ 
-                position: 'relative', 
-                height: '100%',
-                zIndex: 100
+            <Box
+              sx={{
+                position: "relative",
+                height: "100%",
+                zIndex: 9999,
+                width: { xs: "70px", sm: "80px" },
               }}
             >
               <VerticalIcons
@@ -96,7 +103,7 @@ const IndexPage = () => {
               container
               spacing={1}
               sx={{
-                zIndex: 2,
+                zIndex: 9990,
                 position: "relative",
                 mt: 2,
               }}
@@ -114,6 +121,7 @@ const IndexPage = () => {
                 flex: 1,
                 position: "relative",
                 height: "685px",
+                zIndex: 1001,
               }}
             >
               {/* Sidebar and Icons--- */}
@@ -184,113 +192,13 @@ const IndexPage = () => {
                 </section>
               </Grid>
 
-              {/* Floating Info Card */}
-              <Fade in={showInfoCard} timeout={800}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    position: "fixed",
-                    top: isMobile ? "auto" : "100px",
-                    left: isMobile ? "50%" : "35px",
-                    bottom: isMobile ? "80px" : "auto",
-                    transform: isMobile ? "translateX(-50%)" : "none",
-                    width: isMobile ? "90%" : "280px",
-                    borderRadius: "16px",
-                    padding: "20px",
-                    background: "rgba(255, 255, 255, 0.9)",
-                    backdropFilter: "blur(10px)",
-                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                    zIndex: 900,
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      boxShadow: "0 12px 48px rgba(0, 0, 0, 0.15)",
-                      transform: isMobile
-                        ? "translateX(-50%) translateY(-5px)"
-                        : "translateY(-5px)",
-                    },
-                    display: isMobile && isSidebarOpen ? "none" : "block",
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "#00897B", fontWeight: 600, mb: 2 }}
-                  >
-                    Global Product Map
-                  </Typography>
-
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" sx={{ color: "#555", mb: 1 }}>
-                      Currently viewing:
-                    </Typography>
-                    <Chip
-                      label={selectedCountry || "All Countries"}
-                      size="small"
-                      sx={{
-                        mr: 1,
-                        mb: 1,
-                        backgroundColor: "#E0F2F1",
-                        color: "#00897B",
-                        fontWeight: 500,
-                      }}
-                    />
-                    <Chip
-                      label={selectedProduct || "All Products"}
-                      size="small"
-                      sx={{
-                        mr: 1,
-                        mb: 1,
-                        backgroundColor: "#E0F2F1",
-                        color: "#00897B",
-                        fontWeight: 500,
-                      }}
-                    />
-                    <Chip
-                      label={selectedCategory || "All Categories"}
-                      size="small"
-                      sx={{
-                        mr: 1,
-                        mb: 1,
-                        backgroundColor: "#E0F2F1",
-                        color: "#00897B",
-                        fontWeight: 500,
-                      }}
-                    />
-                  </Box>
-
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" sx={{ color: "#555", mb: 1 }}>
-                      Year Range:
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {yearRange[0]} - {yearRange[1]}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "#00897B",
-                        cursor: "pointer",
-                        "&:hover": {
-                          textDecoration: "underline",
-                        },
-                      }}
-                      onClick={() => setShowInfoCard(false)}
-                    >
-                      Hide this card
-                    </Typography>
-                  </Box>
-                </Paper>
-              </Fade>
-
               {/* Toggle Buttons */}
               <Grid
                 sx={{
                   position: "fixed",
                   bottom: "20px",
                   right: "20px",
-                  zIndex: 1000,
+                  zIndex: 900,
                 }}
               >
                 <Suspense fallback={<div>Loading...</div>}>
@@ -299,6 +207,11 @@ const IndexPage = () => {
                     setMapZoom={setMapZoom}
                     selectedProduct={selectedProduct}
                     setShowInfoCard={setShowInfoCard}
+                    showInfoCard={showInfoCard}
+                    selectedCountry={selectedCountry}
+                    selectedCategory={selectedCategory}
+                    yearRange={yearRange}
+                    isSidebarOpen={isSidebarOpen}
                   />
                 </Suspense>
               </Grid>

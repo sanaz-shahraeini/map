@@ -17,12 +17,18 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import { Paper, Fade, Chip, Box, Typography } from "@mui/material";
 
 export default function VerticalToggleButtons({
   mapZoom,
   setMapZoom,
   selectedProduct,
   setShowInfoCard,
+  showInfoCard,
+  selectedCountry,
+  selectedCategory,
+  yearRange,
+  isSidebarOpen,
 }) {
   const [view, setView] = useState("list");
   const [isClient, setIsClient] = useState(false);
@@ -30,7 +36,7 @@ export default function VerticalToggleButtons({
   const isMobile = useMediaQuery("(max-width: 768px)", {
     // Default to false during server-side rendering
     defaultMatches: false,
-    noSsr: true
+    noSsr: true,
   });
 
   useEffect(() => {
@@ -54,35 +60,39 @@ export default function VerticalToggleButtons({
     if (!isClient) return;
 
     if (selectedProduct) {
-      const productName = selectedProduct.product_name || selectedProduct.name || '';
+      const productName =
+        selectedProduct.product_name || selectedProduct.name || "";
       const subject = `Product Information: ${productName}`;
       const body =
         `Hello,\n\nI am sharing the information of the product I viewed:\n\n` +
         `Product Name: ${productName}\n` +
-        `Description: ${selectedProduct.description || ''}\n` +
-        `Image Link: ${selectedProduct.image_url || ''}\n\n` +
+        `Description: ${selectedProduct.description || ""}\n` +
+        `Image Link: ${selectedProduct.image_url || ""}\n\n` +
         `Best regards`;
 
       // Create a shareable text
       const shareText = `${subject}\n\n${body}`;
-      
+
       // Try to use the Web Share API if available
-      if (isClient && typeof navigator !== 'undefined' && navigator.share) {
-        navigator.share({
-          title: subject,
-          text: body,
-          url: document.location.href, // Include current URL
-        })
-        .then(() => {
-          console.log('Successfully shared');
-          setOpenShareDialog(false);
-        })
-        .catch((error) => {
-          console.log('Error sharing:', error);
-        });
+      if (isClient && typeof navigator !== "undefined" && navigator.share) {
+        navigator
+          .share({
+            title: subject,
+            text: body,
+            url: document.location.href, // Include current URL
+          })
+          .then(() => {
+            console.log("Successfully shared");
+            setOpenShareDialog(false);
+          })
+          .catch((error) => {
+            console.log("Error sharing:", error);
+          });
       } else {
         // If Web Share API not available, leave the dialog open for other options
-        alert('Web Share API not supported in your browser. Please use other share options.');
+        alert(
+          "Web Share API not supported in your browser. Please use other share options."
+        );
       }
     } else {
       alert("No product selected for sharing.");
@@ -93,56 +103,61 @@ export default function VerticalToggleButtons({
   // Safer implementation of the URL sharing function
   const handleCopyUrl = () => {
     if (!isClient || !selectedProduct) return;
-    
+
     try {
       // Only execute this code on the client side
-      if (typeof document !== 'undefined') {
+      if (typeof document !== "undefined") {
         const currentUrl = document.location.href;
         const baseUrl = new URL(currentUrl);
-        const productName = selectedProduct.product_name || selectedProduct.name || '';
-        baseUrl.searchParams.set('product', productName);
-        
+        const productName =
+          selectedProduct.product_name || selectedProduct.name || "";
+        baseUrl.searchParams.set("product", productName);
+
         copyToClipboard(baseUrl.toString())
           .then(() => {
-            alert('Product URL copied to clipboard!');
+            alert("Product URL copied to clipboard!");
             setOpenShareDialog(false);
           })
-          .catch(err => {
-            console.error('Failed to copy URL: ', err);
-            alert('Unable to copy URL. Please try again.');
+          .catch((err) => {
+            console.error("Failed to copy URL: ", err);
+            alert("Unable to copy URL. Please try again.");
           });
       }
     } catch (error) {
-      console.error('Error generating URL:', error);
-      alert('Failed to generate shareable URL.');
+      console.error("Error generating URL:", error);
+      alert("Failed to generate shareable URL.");
     }
   };
-  
+
   // Utility function for copying to clipboard
   const copyToClipboard = async (text) => {
     if (!isClient) {
-      return Promise.reject(new Error('Not running in client environment'));
+      return Promise.reject(new Error("Not running in client environment"));
     }
-    
-    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.clipboard &&
+      navigator.clipboard.writeText
+    ) {
       return navigator.clipboard.writeText(text);
     } else {
       return new Promise((resolve, reject) => {
         try {
-          const textarea = document.createElement('textarea');
+          const textarea = document.createElement("textarea");
           textarea.value = text;
-          textarea.style.position = 'fixed';
+          textarea.style.position = "fixed";
           document.body.appendChild(textarea);
           textarea.focus();
           textarea.select();
-          
-          const successful = document.execCommand('copy');
+
+          const successful = document.execCommand("copy");
           document.body.removeChild(textarea);
-          
+
           if (successful) {
             resolve();
           } else {
-            reject(new Error('execCommand copy failed'));
+            reject(new Error("execCommand copy failed"));
           }
         } catch (err) {
           reject(err);
@@ -159,86 +174,96 @@ export default function VerticalToggleButtons({
       return;
     }
 
-    const productName = selectedProduct.product_name || selectedProduct.name || '';
+    const productName =
+      selectedProduct.product_name || selectedProduct.name || "";
     const subject = `Product Information: ${productName}`;
     const body =
       `Hello,\n\nI am sharing the information of the product I viewed:\n\n` +
       `Product Name: ${productName}\n` +
-      `Description: ${selectedProduct.description || ''}\n` +
-      `Image Link: ${selectedProduct.image_url || ''}\n\n` +
+      `Description: ${selectedProduct.description || ""}\n` +
+      `Image Link: ${selectedProduct.image_url || ""}\n\n` +
       `Best regards`;
 
     const shareText = `${subject}\n\n${body}`;
 
     try {
       // Try to use the modern Clipboard API
-      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.clipboard &&
+        navigator.clipboard.writeText
+      ) {
         await navigator.clipboard.writeText(shareText);
-        alert('Product information copied to clipboard!');
+        alert("Product information copied to clipboard!");
         setOpenShareDialog(false);
       } else if (isClient) {
         // Fall back to the older execCommand method
-        const textarea = document.createElement('textarea');
+        const textarea = document.createElement("textarea");
         textarea.value = shareText;
-        textarea.style.position = 'fixed'; // Prevent scrolling to bottom
+        textarea.style.position = "fixed"; // Prevent scrolling to bottom
         document.body.appendChild(textarea);
         textarea.focus();
         textarea.select();
 
-        const successful = document.execCommand('copy');
+        const successful = document.execCommand("copy");
         document.body.removeChild(textarea);
-        
+
         if (successful) {
-          alert('Product information copied to clipboard!');
+          alert("Product information copied to clipboard!");
           setOpenShareDialog(false);
         } else {
-          alert('Unable to copy to clipboard. Please try again.');
+          alert("Unable to copy to clipboard. Please try again.");
         }
       }
     } catch (err) {
-      console.error('Failed to copy text: ', err);
-      alert('Unable to copy to clipboard. Please try again.');
+      console.error("Failed to copy text: ", err);
+      alert("Unable to copy to clipboard. Please try again.");
     }
   };
 
   const handleEmailShare = () => {
     if (!isClient) return;
-    
+
     if (!selectedProduct) {
       alert("No product selected for sharing.");
       return;
     }
 
-    const productName = selectedProduct.product_name || selectedProduct.name || '';
+    const productName =
+      selectedProduct.product_name || selectedProduct.name || "";
     const subject = `Product Information: ${productName}`;
     const body =
       `Hello,\n\nI am sharing the information of the product I viewed:\n\n` +
       `Product Name: ${productName}\n` +
-      `Description: ${selectedProduct.description || ''}\n` +
-      `Image Link: ${selectedProduct.image_url || ''}\n\n` +
+      `Description: ${selectedProduct.description || ""}\n` +
+      `Image Link: ${selectedProduct.image_url || ""}\n\n` +
       `Best regards`;
 
     // Use a client-side only approach
-    if (typeof document !== 'undefined') {
+    if (typeof document !== "undefined") {
       const mailtoLink = `mailto:?subject=${encodeURIComponent(
         subject
       )}&body=${encodeURIComponent(body)}`;
-      
+
       // Create a temporary link element and click it
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = mailtoLink;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
-    
+
     setOpenShareDialog(false);
   };
 
   const buttons = [
     { value: "add", icon: <AddIcon />, action: increaseZoom },
     { value: "remove", icon: <RemoveIcon />, action: decreaseZoom },
-    { value: "share", icon: <ShareIcon />, action: () => setOpenShareDialog(true) },
+    {
+      value: "share",
+      icon: <ShareIcon />,
+      action: () => setOpenShareDialog(true),
+    },
     { value: "info", icon: <InfoIcon />, action: () => setShowInfoCard(true) },
     { value: "settings", icon: <SettingsIcon /> },
     { value: "help", icon: <HelpIcon /> },
@@ -333,47 +358,57 @@ export default function VerticalToggleButtons({
             <p>No product selected for sharing.</p>
           ) : (
             <>
-              <p><strong>Share:</strong> {selectedProduct.product_name || selectedProduct.name || ''}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '20px' }}>
+              <p>
+                <strong>Share:</strong>{" "}
+                {selectedProduct.product_name || selectedProduct.name || ""}
+              </p>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "16px",
+                  marginTop: "20px",
+                }}
+              >
                 <Button
                   variant="contained"
                   startIcon={<ShareIcon />}
                   color="primary"
                   onClick={handleShareProduct}
                   fullWidth
-                  style={{ marginBottom: '16px', height: '48px' }}
+                  style={{ marginBottom: "16px", height: "48px" }}
                 >
                   Use Device Sharing
                 </Button>
-                
+
                 <Button
                   variant="contained"
                   startIcon={<ContentCopyIcon />}
                   color="secondary"
                   onClick={fallbackToClipboard}
                   fullWidth
-                  style={{ marginBottom: '16px', height: '48px' }}
+                  style={{ marginBottom: "16px", height: "48px" }}
                 >
                   Copy to Clipboard
                 </Button>
-                
+
                 <Button
                   variant="outlined"
                   startIcon={<InfoIcon />}
                   color="primary"
                   onClick={handleEmailShare}
                   fullWidth
-                  style={{ height: '48px' }}
+                  style={{ height: "48px" }}
                 >
                   Share via Email
                 </Button>
-                
+
                 <Button
-                  variant="outlined" 
+                  variant="outlined"
                   color="primary"
                   onClick={handleCopyUrl}
                   fullWidth
-                  style={{ height: '48px' }}
+                  style={{ height: "48px" }}
                 >
                   Copy Product URL
                 </Button>
@@ -387,6 +422,109 @@ export default function VerticalToggleButtons({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Floating Info Card */}
+      <Fade in={showInfoCard} timeout={800}>
+        <Paper
+          elevation={3}
+          sx={{
+            position: "absoloute",
+            top: isMobile ? "auto" : "400px",
+            left: isMobile ? "50%" : "535px",
+          
+            bottom: isMobile ? "80px" : "300px",
+            transform: isMobile ? "translateX(-50%)" : "none",
+            width: isMobile ? "90%" : "280px",
+            borderRadius: "16px",
+            padding: "20px",
+            background: "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(10px)",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+            zIndex: 10,
+            transition: "all 0.3s ease",
+            "&:hover": {
+              boxShadow: "0 12px 48px rgba(0, 0, 0, 0.15)",
+              transform: isMobile
+                ? "translateX(-50%) translateY(-5px)"
+                : "translateY(-5px)",
+            },
+            display: isMobile && isSidebarOpen ? "none" : "block",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ color: "#00897B", fontWeight: 600, mb: 2 }}
+          >
+            Global Product Map
+          </Typography>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ color: "#555", mb: 1 }}>
+              Currently viewing:
+            </Typography>
+            <Chip
+              label={selectedCountry || "All Countries"}
+              size="small"
+              sx={{
+                mr: 1,
+                mb: 1,
+                backgroundColor: "#E0F2F1",
+                color: "#00897B",
+                fontWeight: 500,
+              }}
+            />
+            <Chip
+              label={selectedProduct || "All Products"}
+              size="small"
+              sx={{
+                mr: 1,
+                mb: 1,
+                backgroundColor: "#E0F2F1",
+                color: "#00897B",
+                fontWeight: 500,
+              }}
+            />
+            <Chip
+              label={selectedCategory || "All Categories"}
+              size="small"
+              sx={{
+                mr: 1,
+                mb: 1,
+                backgroundColor: "#E0F2F1",
+                color: "#00897B",
+                fontWeight: 500,
+              }}
+            />
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ color: "#555", mb: 1 }}>
+              Year Range:
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              {yearRange
+                ? `${yearRange[0]} - ${yearRange[1]}`
+                : "No year range selected"}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "#00897B",
+                cursor: "pointer",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}
+              onClick={() => setShowInfoCard(false)}
+            >
+              Hide this card
+            </Typography>
+          </Box>
+        </Paper>
+      </Fade>
     </div>
   );
 }

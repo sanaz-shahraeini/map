@@ -37,11 +37,11 @@ import CssBaseline from "@mui/material/CssBaseline";
 import theme from "../theme"
 import "./globals.css";
 import "../css/colors.css";
-import { Roboto } from "next/font/google";
+import { Poppins } from "next/font/google";
 import { ProductsProvider } from "../useContexts/ProductsContext"; // وارد کردن ProductsProvider
 import { SearchProvider } from "../useContexts/SearchContext"; // وارد کردن SearchProvider
 
-const roboto = Roboto({
+const poppins= Poppins({
   weight: ["300", "400", "500", "700"],
   subsets: ["latin"],
   display: "swap",
@@ -49,7 +49,7 @@ const roboto = Roboto({
 
 export default function RootLayout(props) {
   return (
-    <html lang="en" dir="ltr" className={roboto.className}>
+    <html lang="en" dir="ltr" className={poppins.className}>
       <body>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <ThemeProvider theme={theme}>

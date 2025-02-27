@@ -14,9 +14,9 @@ const FilteredInfoSection = ({
       sx={{
         padding: 2,
         bgcolor: "#fbfbfb",
-        mt: 2,
+        mt: 1,
         width: "128%",
-        marginLeft: { xs: "-1%", md: "6%" },
+        marginLeft: { xs: "-1%", md: "9%" },
       }}
     >
       {/* نمایش اطلاعات اضافی */}

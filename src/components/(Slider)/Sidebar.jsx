@@ -55,7 +55,7 @@ const Sidebar = ({
       {/* Year Range Section */}
       <Grid size={{ xs: 12 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 'medium' }}>EPD Year Filter</Typography>
+          
           <FormGroup>
             <FormControlLabel 
               control={
@@ -67,7 +67,7 @@ const Sidebar = ({
                     }
                   }}
                   size="small"
-                  color="primary"
+                  color="info"
                 />
               } 
               label="EPD API Only" 
@@ -86,9 +86,7 @@ const Sidebar = ({
           sx={{ color: "#00897B" }}
         />
         <Typography variant="body2" sx={{ color: "text.secondary", mt: 2 }}>
-          {filterEpdOnly
-            ? "Filter EPD markers from the EPD API by their reference year. Only EPDs within the selected range will be shown." 
-            : "Filter all markers by year range. Both EPD and non-EPD markers will be affected."}
+          Filter EPD markers by their reference year
         </Typography>
 
         <Divider sx={{ mt: 2 }} />
@@ -143,7 +141,7 @@ const Sidebar = ({
           </AccordionSummary>
           <AccordionDetails sx={{ maxHeight: "60px", overflowY: "auto" }}>
             <List>
-              {["Option 1", "Option 2", "Option 3"].map((option, index) => (
+              {["Industry Solutions", "Company"].map((option, index) => (
                 <ListItem
                   button
                   key={index}

@@ -304,6 +304,11 @@ const MapComponent = forwardRef(
         // If we have filtered products from search, use those
         if (filteredProductsList && filteredProductsList.length > 0) {
           return filteredProductsList.some(product => {
+            // Only show regular API products in search results, not EPD API products
+            if (product.isFromEPDAPI) {
+              return false;
+            }
+            
             const productName = product.product_name || product.name || '';
             const locationProduct = location.product || '';
             

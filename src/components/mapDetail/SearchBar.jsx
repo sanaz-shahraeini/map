@@ -39,7 +39,7 @@ const SearchBar = ({ mapRef }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const { setSelectedProduct } = useProducts();
+  const { setSelectedProduct, regularProducts, allProducts } = useProducts();
   const {
     searchResults,
     setSearchQuery: setContextSearchQuery,
@@ -60,10 +60,10 @@ const SearchBar = ({ mapRef }) => {
     const query = e.target.value;
     setSearchQuery(query);
     setContextSearchQuery(query);
-    
+
     // Clear the selected product when typing a new search
     setSelectedProduct(null);
-    
+
     // Show results while typing if query is not empty
     setShowResults(query.length > 0);
 
@@ -104,16 +104,16 @@ const SearchBar = ({ mapRef }) => {
     const productName = product.product_name || product.name;
     setSearchQuery(productName);
     setContextSearchQuery(productName);
-    
+
     // Make a deep copy to ensure all properties are passed
     const productToSelect = { ...product };
-    
+
     // Log details before setting
     console.log("Selecting product:", productName, productToSelect);
-    
+
     // Set the selected product in the context
     setSelectedProduct(productToSelect);
-    
+
     // Hide the search results after selection
     setShowResults(false);
   };
@@ -122,17 +122,19 @@ const SearchBar = ({ mapRef }) => {
     // Clear the search input
     setSearchQuery("");
     setContextSearchQuery("");
-    
+
     // Reset the selected product to show all markers
     setSelectedProduct(null);
-    
+
     // Hide the search results
     setShowResults(false);
   };
 
-  // Group products by country
-  const groupedByCountry = Array.isArray(filteredProducts)
-    ? filteredProducts.reduce((acc, product) => {
+  // Group products by country for the modal display
+  const productsForModal = regularProducts || [];
+
+  const groupedByCountry = Array.isArray(productsForModal)
+    ? productsForModal.reduce((acc, product) => {
         const country = product.country || "Unknown";
         if (!acc[country]) {
           acc[country] = [];
@@ -164,18 +166,19 @@ const SearchBar = ({ mapRef }) => {
         width: "100%",
         position: "fixed",
         top: isMobile ? 0 : 100,
-        zIndex: markerSelected ? 500 : 900,
+        zIndex: markerSelected ? 9999 : 900,
         transition: "z-index 0.1s ease",
       }}
     >
       <Grid
         container
-        display={"flex"}
-        justifyContent="center"
-        sx={{ width: isMobile ? "95%" : "70%" }}
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          width: isMobile ? "95%" : "70%",
+        }}
       >
         <Grid
-          item
           xs={isMobile ? 8 : 9}
           sx={{ marginRight: isMobile ? 0 : "8px", position: "relative" }}
         >
@@ -217,7 +220,7 @@ const SearchBar = ({ mapRef }) => {
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <Tooltip title="Search only shows products from the regular products API. Search matches the first letter after 'zehnder-' in product names. Example: &quot;l&quot; will find &quot;zehnder-luna&quot;">
+                  <Tooltip title="Search shows regular products from the standard API. Search matches the first letter after 'zehnder-' in product names. Example: 'l' will find 'zehnder-luna'">
                     <HelpOutlineIcon
                       sx={{
                         color: "#00897B",
@@ -261,7 +264,10 @@ const SearchBar = ({ mapRef }) => {
             >
               <Box p={2}>
                 {isLoading ? (
-                  <Typography color="textSecondary" sx={{ py: 2, textAlign: 'center' }}>
+                  <Typography
+                    color="textSecondary"
+                    sx={{ py: 2, textAlign: "center" }}
+                  >
                     Searching...
                   </Typography>
                 ) : filteredProducts.length > 0 ? (
@@ -286,7 +292,8 @@ const SearchBar = ({ mapRef }) => {
                           <Box
                             component="img"
                             src={
-                              product.image_url || "/public/images/images(map).png"
+                              product.image_url ||
+                              "/public/images/images(map).png"
                             }
                             alt={product.product_name}
                             sx={{
@@ -307,7 +314,10 @@ const SearchBar = ({ mapRef }) => {
                             </Typography>
                           }
                           secondary={
-                            <Typography variant="caption" sx={{ color: "#666" }}>
+                            <Typography
+                              variant="caption"
+                              sx={{ color: "#666" }}
+                            >
                               {product.geo || "Location not specified"}
                             </Typography>
                           }
@@ -316,11 +326,21 @@ const SearchBar = ({ mapRef }) => {
                     ))}
                   </List>
                 ) : (
-                  <Typography color="textSecondary" sx={{ py: 2, textAlign: 'center' }}>
+                  <Typography
+                    color="textSecondary"
+                    sx={{ py: 2, textAlign: "center" }}
+                  >
                     No products found. Try a different search.
                     <br />
-                    <span style={{ fontSize: '12px', marginTop: '8px', display: 'block' }}>
-                      For zehnder products, type a letter that appears after "zehnder-".
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        marginTop: "8px",
+                        display: "block",
+                      }}
+                    >
+                      For zehnder products, type a letter that appears after
+                      "zehnder-".
                       <br />
                       Example: &quot;l&quot; will find &quot;zehnder-luna&quot;
                     </span>
@@ -362,15 +382,31 @@ const SearchBar = ({ mapRef }) => {
           setOpenModal(false);
           setIcon(<PublicIcon sx={{ color: "#384029" }} />);
         }}
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+        onClick={(e) => {
+          // Only close if clicking the backdrop (not the modal content)
+          if (e.target === e.currentTarget) {
+            setOpenModal(false);
+            setIcon(<PublicIcon sx={{ color: "#384029" }} />);
+          }
+        }}
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-start",
+          position: "absolute",
+          top: isMobile ? "60px" : "160px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 9992,
+        }}
       >
         <Box
+          onClick={(e) => e.stopPropagation()}
           sx={{
             width: isMobile ? "90%" : "900px",
-            height: isMobile ? "80%" : "600px",
+            maxHeight: "80vh",
             bgcolor: "white",
             padding: 3,
-            marginTop: isMobile ? 5 : 10,
             borderRadius: 4,
             boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
             overflowY: "auto",
@@ -378,7 +414,7 @@ const SearchBar = ({ mapRef }) => {
             "@keyframes fadeIn": {
               "0%": {
                 opacity: 0,
-                transform: "translateY(20px)",
+                transform: "translateY(-20px)",
               },
               "100%": {
                 opacity: 1,
@@ -416,163 +452,178 @@ const SearchBar = ({ mapRef }) => {
             Products from {countryNames[page - 1] || "All Countries"}
           </Typography>
 
+          {/* Debug information */}
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+            Total countries: {countryNames.length}, Current page: {page},
+            Products on this page: {productsForCurrentPage.length}
+          </Typography>
+
           <List sx={{ padding: 0 }}>
-            {productsForCurrentPage.map((product, index) => (
-              <ListItem
-                key={`Product${index}`}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  backgroundColor: "#ffffff",
-                  height: "75px",
-                  paddingX: 2,
-                  paddingY: 5,
-                  borderRadius: "12px",
-                  marginBottom: 2,
-                  transition: "all 0.2s ease",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-                  "&:hover": {
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                    transform: "translateY(-2px)",
-                    backgroundColor: "#F5F5F5",
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: "40px", marginRight: 4 }}>
-                  <Box
-                    component="img"
-                    src={product.image_url || "/public/images/images(map).png"}
-                    alt={`Product ${index + 1}`}
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                      boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-                    }}
-                  />
-                </ListItemIcon>
-                <Box sx={{ flex: 1, display: "flex", alignItems: "center" }}>
-                  <ListItemText
-                    primary={
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontWeight: 600,
-                          color: "#333",
-                        }}
-                      >
-                        {product.name || product.product_name}
-                      </Typography>
-                    }
-                    secondary={
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: "12px",
-                          color: "#666",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {product.description?.length > 100
-                          ? `${product.description.slice(0, 100)}...`
-                          : product.description || ""}
-                      </Typography>
-                    }
-                  />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      marginLeft: 2,
-                    }}
-                  >
+            {productsForCurrentPage.length > 0 ? (
+              productsForCurrentPage.map((product, index) => (
+                <ListItem
+                  key={`Product${index}`}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: "#ffffff",
+                    height: "75px",
+                    paddingX: 2,
+                    paddingY: 5,
+                    borderRadius: "12px",
+                    marginBottom: 2,
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+                    "&:hover": {
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                      transform: "translateY(-2px)",
+                      backgroundColor: "#F5F5F5",
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: "40px", marginRight: 4 }}>
+                    <Box
+                      component="img"
+                      src={
+                        product.image_url || "/public/images/images(map).png"
+                      }
+                      alt={`Product ${index + 1}`}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                        boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                      }}
+                    />
+                  </ListItemIcon>
+                  <Box sx={{ flex: 1, display: "flex", alignItems: "center" }}>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: 600,
+                            color: "#333",
+                          }}
+                        >
+                          {product.name || product.product_name}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontSize: "12px",
+                            color: "#666",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {product.description?.length > 100
+                            ? `${product.description.slice(0, 100)}...`
+                            : product.description || ""}
+                        </Typography>
+                      }
+                    />
                     <Box
                       sx={{
-                        height: "24px",
-                        width: "auto",
                         display: "flex",
+                        flexDirection: "column",
                         alignItems: "center",
-                        backgroundColor: "#E0F2F1",
-                        padding: "5px 12px",
-                        borderRadius: "20px",
-                        marginBottom: 1,
+                        marginLeft: 2,
                       }}
                     >
-                      <StarIcon
+                      <Box
                         sx={{
-                          color: "#00897B",
-                          fontSize: "16px",
-                          marginRight: 0.5,
-                        }}
-                      />
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "#00897B", fontWeight: 600 }}
-                      >
-                        {product.type || "Product"}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "row",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {product.type === "EPD" && product.pdf_url ? (
-                        <Tooltip title="Download PDF">
-                          <IconButton
-                            onClick={() => handleDownload(product.pdf_url)}
-                            sx={{
-                              backgroundColor: "#E0F2F1",
-                              "&:hover": {
-                                backgroundColor: "#B2DFDB",
-                              },
-                              transition: "all 0.2s ease",
-                            }}
-                          >
-                            <DownloadIcon sx={{ color: "#00897B" }} />
-                          </IconButton>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip title="Request Info">
-                          <IconButton
-                            onClick={() => alert("Request sent!")}
-                            sx={{
-                              backgroundColor: "#E0F2F1",
-                              "&:hover": {
-                                backgroundColor: "#B2DFDB",
-                              },
-                              transition: "all 0.2s ease",
-                            }}
-                          >
-                            <SendIcon
-                              style={{ color: "#00897B", fontSize: "20px" }}
-                            />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      <IconButton
-                        sx={{
-                          marginLeft: 1,
+                          height: "24px",
+                          width: "auto",
+                          display: "flex",
+                          alignItems: "center",
                           backgroundColor: "#E0F2F1",
-                          "&:hover": {
-                            backgroundColor: "#B2DFDB",
-                          },
-                          transition: "all 0.2s ease",
+                          padding: "5px 12px",
+                          borderRadius: "20px",
+                          marginBottom: 1,
                         }}
                       >
-                        <InfoOutlinedIcon sx={{ color: "#00897B" }} />
-                      </IconButton>
+                        <StarIcon
+                          sx={{
+                            color: "#00897B",
+                            fontSize: "16px",
+                            marginRight: 0.5,
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#00897B", fontWeight: 600 }}
+                        >
+                          {product.type || "Product"}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "row",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {product.type === "EPD" && product.pdf_url ? (
+                          <Tooltip title="Download PDF">
+                            <IconButton
+                              onClick={() => handleDownload(product.pdf_url)}
+                              sx={{
+                                backgroundColor: "#E0F2F1",
+                                "&:hover": {
+                                  backgroundColor: "#B2DFDB",
+                                },
+                                transition: "all 0.2s ease",
+                              }}
+                            >
+                              <DownloadIcon sx={{ color: "#00897B" }} />
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Request Info">
+                            <IconButton
+                              onClick={() => alert("Request sent!")}
+                              sx={{
+                                backgroundColor: "#E0F2F1",
+                                "&:hover": {
+                                  backgroundColor: "#B2DFDB",
+                                },
+                                transition: "all 0.2s ease",
+                              }}
+                            >
+                              <SendIcon
+                                style={{ color: "#00897B", fontSize: "20px" }}
+                              />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <IconButton
+                          sx={{
+                            marginLeft: 1,
+                            backgroundColor: "#E0F2F1",
+                            "&:hover": {
+                              backgroundColor: "#B2DFDB",
+                            },
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <InfoOutlinedIcon sx={{ color: "#00897B" }} />
+                        </IconButton>
+                      </Box>
                     </Box>
                   </Box>
-                </Box>
-              </ListItem>
-            ))}
+                </ListItem>
+              ))
+            ) : (
+              <Typography variant="body1" sx={{ textAlign: "center", py: 4 }}>
+                No products available for{" "}
+                {countryNames[page - 1] || "this country"}.
+              </Typography>
+            )}
           </List>
           <Pagination
             count={countryNames.length}

@@ -195,7 +195,7 @@ const VerticalIcons = ({
   const SidebarContent = () => (
     <Box
       sx={{
-        width: { xs: "70px", sm: "80px" },
+        width: { xs: "70px", sm: "100px" },
         height: "100vh",
         backgroundColor: "#ffffff",
         boxShadow: "0 0 20px rgba(0, 0, 0, 0.07)",

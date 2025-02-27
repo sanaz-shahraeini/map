@@ -25,6 +25,11 @@ export function SearchProvider({ children }) {
     console.log('Available products:', regularProducts.length);
 
     const filtered = regularProducts.filter((product) => {
+      // Only search in regular API products, not EPD API products
+      if (product.isFromEPDAPI) {
+        return false;
+      }
+      
       const productName = (product.product_name || product.name || "").toLowerCase();
       
       // Special case for zehnder-basic-silent-wall-fan

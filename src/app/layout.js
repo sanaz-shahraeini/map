@@ -17,21 +17,14 @@ const poppins= Poppins({
   display: "swap",
 });
 
-export default function RootLayout(props) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en" dir="ltr" className={poppins.className}>
       <body>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <ThemeProvider theme={theme}>
-            {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
             <CssBaseline />
-
-            {/* Wrap context providers here */}
-            <ProductsProvider>
-              <SearchProvider>
-                {props.children} {/* کامپوننت‌های فرزند شما */}
-              </SearchProvider>
-            </ProductsProvider>
+            {children}
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

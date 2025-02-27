@@ -1,6 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, Circle, Popup, useMap } from "react-leaflet";
+// Setup Leaflet to work with Next.js and dynamic imports
+import dynamic from 'next/dynamic';
 import "leaflet/dist/leaflet.css";
 import {
   useState,
@@ -16,6 +17,35 @@ import { useProducts } from "../../useContexts/ProductsContext";
 import { useSearch } from "../../useContexts/SearchContext";
 import Loading from "../common/Loading";
 
+// Dynamically import react-leaflet to avoid SSR issues
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { 
+    ssr: false,
+    loading: () => <div>Loading map component...</div>
+  }
+);
+
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+
+const Circle = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Circle),
+  { ssr: false }
+);
+
+const Popup = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Popup),
+  { ssr: false }
+);
+
+const useMap = dynamic(
+  () => import('react-leaflet').then((mod) => mod.useMap),
+  { ssr: false }
+);
+
 const MapComponent = forwardRef(
   (
     {
@@ -30,6 +60,18 @@ const MapComponent = forwardRef(
     ref
   ) => {
     const [loading, setLoading] = useState(false);
+    // Early return with a loading indicator if we're not in a browser environment
+    const [isBrowser, setIsBrowser] = useState(false);
+    
+    useEffect(() => {
+      setIsBrowser(true);
+    }, []);
+    
+    if (!isBrowser) {
+      return <Loading message="Loading..." />;
+    }
+
+    const [loading, setLoading] = useState(false); 
     const [error, setError] = useState(null);
     const [locations, setLocations] = useState([]);
     const [epdFilterStats, setEpdFilterStats] = useState({
@@ -205,6 +247,16 @@ const MapComponent = forwardRef(
     }, [allProducts, productsLoading]);
 
     const ZoomControl = ({ setZoom, zoom }) => {
+      // Use a ref to check if we're in a browser environment
+      const [isMounted, setIsMounted] = useState(false);
+      
+      useEffect(() => {
+        setIsMounted(true);
+      }, []);
+      
+      // If not mounted yet, don't render
+      if (!isMounted) return null;
+      
       const map = useMap();
 
       useEffect(() => {
@@ -805,6 +857,69 @@ const MapComponent = forwardRef(
                   weight: 1,
                   fillOpacity: 0.6,
                 };
+        {isBrowser ? (
+          <MapContainer
+            center={[30, -10]}
+            zoom={3}
+            style={{ height: "100vh", width: "100%" }}
+            ref={mapRef}
+            maxBounds={[
+              [-90, -180],
+              [90, 180],
+            ]}
+          >
+            <ZoomControl setZoom={setZoom} zoom={zoom} />
+            <TileLayer 
+              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" 
+            />
+            {distributedLocations.length === 0 && !isLoading && (
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1,
+                background: 'rgba(255,255,255,0.8)',
+                padding: '10px',
+                borderRadius: '5px'
+              }}>
+                No markers to display. Check console for details.
+              </div>
+            )}
+            {distributedLocations.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                zIndex: 1,
+                background: 'rgba(255,255,255,0.8)',
+                padding: '5px',
+                borderRadius: '5px',
+                fontSize: '12px'
+              }}>
+                Showing {distributedLocations.length} markers
+              </div>
+            )}
+            {distributedLocations.map((location, index) => {
+              // Determine if this is the selected location
+              const isSelected = selectedLocation && 
+                location.lat === selectedLocation.lat && 
+                location.lng === selectedLocation.lng;
+              
+              // Different style for selected marker
+              const circleOptions = isSelected 
+                ? { 
+                    fillColor: "#4DB6AC", // Teal 300 for selected (brighter)
+                    color: "#00695C", // Teal 800 border (darker)
+                    weight: 2,
+                    fillOpacity: 0.8,
+                  }
+                : {
+                    fillColor: location.isEpd ? "#4DB6AC" : "#00695C", // Teal 300 vs Teal 800 (light vs dark)
+                    color: location.isEpd ? "#26A69A" : "#004D40", // Teal 400 vs Teal 900 border
+                    weight: 1,
+                    fillOpacity: 0.6,
+                  };
 
             return (
               <Circle
@@ -848,6 +963,43 @@ const MapComponent = forwardRef(
           })}
         </MapContainer>
 
+              return (
+                <Circle
+                  key={`${location.lat}-${location.lng}-${index}`}
+                  center={[location.lat, location.lng]}
+                  radius={getCircleRadius(zoom)}
+                  pathOptions={circleOptions}
+                >
+                  <Popup>
+                    <div style={{ maxWidth: "250px" }}>
+                      <h3>{location.product}</h3>
+                      <p>
+                        <strong>Country:</strong> {location.country}
+                        {isSelected && <span style={{ color: "red" }}> ★ Selected</span>}
+                      </p>
+                      {location.isEpd && (
+                        <p>
+                          <strong>Type:</strong> {location.isEpd}
+                        </p>
+                      )}
+                      {location.description && (
+                        <p>
+                          <strong>Description:</strong> {location.description.substring(0, 100)}
+                          {location.description.length > 100 ? "..." : ""}
+                        </p>
+                      )}
+                    </div>
+                  </Popup>
+                </Circle>
+              );
+            })}
+          </MapContainer>
+        ) : (
+          <div style={{ height: "100vh", width: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <Loading message="Loading map..." />
+          </div>
+        )}
+        
         {/* Overlay loading indicator when loading */}
         {isLoading && <Loading message={loadingMessage} />}
         <style jsx global>{`

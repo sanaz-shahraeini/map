@@ -240,6 +240,9 @@ const VerticalIcons = ({
         borderRight: "1px solid rgba(0, 0, 0, 0.06)",
         overflowY: "auto",
         overflowX: "hidden",
+        WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
+        zIndex: 11001,
         "&::-webkit-scrollbar": {
           width: "4px",
         },
@@ -252,9 +255,6 @@ const VerticalIcons = ({
         },
         "&::-webkit-scrollbar-thumb:hover": {
           background: "rgba(0, 137, 123, 0.4)",
-        },
-        "& .MuiTooltip-popper": {
-          zIndex: 10001,
         },
       }}
     >
@@ -304,7 +304,7 @@ const VerticalIcons = ({
           variant="subtitle2"
           sx={{
             mt: 1.5,
-            fontSize: "11px",
+            fontSize: isMobile ? "9px" : "11px",
             color: "#00897B",
             fontWeight: 600,
             letterSpacing: "0.5px",
@@ -343,9 +343,9 @@ const VerticalIcons = ({
           sx={{
             color: "#00796B",
             fontWeight: 700,
-            fontSize: { xs: "11px", sm: "12px" },
+            fontSize: isMobile ? "9px" : "12px",
             textTransform: "uppercase",
-            letterSpacing: "1px",
+            letterSpacing: isMobile ? "0.5px" : "1px",
             textAlign: "center",
             display: "block",
             mb: 2,
@@ -356,7 +356,7 @@ const VerticalIcons = ({
               bottom: "-6px",
               left: "50%",
               transform: "translateX(-50%)",
-              width: "16px",
+              width: isMobile ? "12px" : "16px",
               height: "2px",
               backgroundColor: "#00897B",
               borderRadius: "2px",
@@ -407,7 +407,7 @@ const VerticalIcons = ({
                   mt: 0.5,
                   color: selectedCategory === "all" ? "#00796B" : "#26A69A",
                   fontWeight: selectedCategory === "all" ? 600 : 500,
-                  fontSize: { xs: "9px", sm: "10px" },
+                  fontSize: isMobile ? "8px" : "10px",
                 }}
               >
                 All
@@ -432,12 +432,32 @@ const VerticalIcons = ({
               <CategoryButton
                 selected={selectedCategory === category.name}
                 onClick={() => handleCategoryClick(category.name)}
+                sx={{
+                  padding: isMobile ? "16px 6px" : "12px 6px",
+                  margin: isMobile ? "6px 0" : "4px 0",
+                  minHeight: isMobile ? "72px" : "64px",
+                  touchAction: "manipulation",
+                  WebkitTapHighlightColor: "transparent",
+                  cursor: "pointer",
+                  userSelect: "none",
+                  "&:active": {
+                    transform: "scale(0.95)",
+                  },
+                  "&:hover": {
+                    backgroundColor: "rgba(0, 137, 123, 0.05)",
+                  },
+                }}
               >
                 <CategoryIndicator
                   selected={selectedCategory === category.name}
                 />
                 <StyledCategoryIcon
                   selected={selectedCategory === category.name}
+                  sx={{
+                    width: isMobile ? "40px" : "36px",
+                    height: isMobile ? "40px" : "36px",
+                    touchAction: "manipulation",
+                  }}
                 >
                   <CategoryRoundedIcon />
                 </StyledCategoryIcon>
@@ -451,12 +471,13 @@ const VerticalIcons = ({
                         ? "#00796B"
                         : "#26A69A",
                     fontWeight: selectedCategory === category.name ? 600 : 500,
-                    fontSize: { xs: "9px", sm: "10px" },
+                    fontSize: isMobile ? "8px" : "10px",
                     maxWidth: "90%",
                     textAlign: "center",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
+                    pointerEvents: "none",
                   }}
                 >
                   {category.name.length > 8
@@ -529,7 +550,7 @@ const VerticalIcons = ({
                 mt: 0.5,
                 color: filterEpdOnly ? "#00796B" : "#26A69A",
                 fontWeight: filterEpdOnly ? 600 : 500,
-                fontSize: { xs: "9px", sm: "10px" },
+                fontSize: isMobile ? "8px" : "10px",
               }}
             >
               EPD
@@ -559,12 +580,17 @@ const VerticalIcons = ({
           position: "fixed",
           top: "10px",
           left: "10px",
-          zIndex: 10000,
+          zIndex: 11000,
           backgroundColor: "white",
+          padding: "12px",
           boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
           "&:hover": {
             backgroundColor: "white",
           },
+          "&:active": {
+            transform: "scale(0.95)",
+          },
+          touchAction: "manipulation",
         }}
       >
         <MenuRoundedIcon />
@@ -575,18 +601,43 @@ const VerticalIcons = ({
         anchor="left"
         open={mobileOpen}
         onClose={handleDrawerToggle}
+        variant="temporary"
         sx={{
           display: { xs: "block", sm: "none" },
+          position: "fixed",
           "& .MuiDrawer-paper": {
             width: "70px",
             boxSizing: "border-box",
+            zIndex: 11000,
+            boxShadow: "4px 0 8px rgba(0, 0, 0, 0.1)",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            height: "100%",
           },
-          "& .MuiTooltip-popper": {
-            zIndex: 10001,
+          "& .MuiBackdrop-root": {
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
+            zIndex: 10999,
           },
         }}
+        ModalProps={{
+          keepMounted: true,
+          disablePortal: true,
+          style: { position: "fixed" },
+        }}
       >
-        <SidebarContent />
+        <Box
+          sx={{
+            height: "100%",
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
+            touchAction: "pan-y",
+            position: "relative",
+            zIndex: 11001,
+          }}
+        >
+          <SidebarContent />
+        </Box>
       </Drawer>
 
       {/* Permanent sidebar for desktop view */}

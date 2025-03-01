@@ -27,16 +27,6 @@ import DevicesIcon from "@mui/icons-material/Devices";
 import { useProducts } from "../../useContexts/ProductsContext";
 
 const Header = () => {
-  const { loading } = useProducts();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
-  const [selectedCategory, setSelectedCategory] = useState("Building Products");
-
-  const handleLanguageChange = (event) => {
-    setSelectedLanguage(event.target.value);
-  };
-
   const categories = [
     { id: "map", label: "Map", icon: MapIcon },
     {
@@ -47,6 +37,17 @@ const Header = () => {
     { id: "building", label: "Building Products", icon: ApartmentIcon },
     { id: "electronic", label: "Electronic Products", icon: DevicesIcon },
   ];
+  const { loading } = useProducts();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [selectedCategory, setSelectedCategory] = useState(categories[2].id);
+
+  const handleLanguageChange = (event) => {
+    setSelectedLanguage(event.target.value);
+  };
+
+  
 
   return (
     <AppBar

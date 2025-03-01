@@ -343,7 +343,7 @@ const VerticalIcons = ({
           sx={{
             color: "#00796B",
             fontWeight: 700,
-            fontSize: isMobile ? "9px" : "12px",
+            fontSize: isMobile ? "8px" : "12px",
             textTransform: "uppercase",
             letterSpacing: isMobile ? "0.5px" : "1px",
             textAlign: "center",

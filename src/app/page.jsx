@@ -117,7 +117,7 @@ const IndexPage = () => {
               sx={{
                 position: "relative",
                 height: "100%",
-                zIndex: 9990,
+                zIndex: 100,
                 width: { xs: "70px", sm: "80px" },
               }}
             >
@@ -138,7 +138,7 @@ const IndexPage = () => {
               container
               spacing={1}
               sx={{
-                zIndex: 9990,
+                zIndex: 200,
                 position: "relative",
                 mt: 2,
               }}
@@ -156,7 +156,7 @@ const IndexPage = () => {
                 flex: 1,
                 position: "relative",
                 height: "685px",
-                zIndex: 1001,
+                zIndex: 1,
               }}
             >
               {/* Sidebar and Icons--- */}
@@ -165,7 +165,7 @@ const IndexPage = () => {
                 {isSidebarOpen && (
                   <Box
                     sx={{
-                      zIndex: 3,
+                      zIndex: 150,
                       width: "250px",
                       position: "relative",
                       top: "0",
@@ -208,7 +208,7 @@ const IndexPage = () => {
                       height: "100vh",
                       width: "100vw",
                       position: "fixed",
-                      zIndex: -1,
+                      zIndex: 1,
                       top: 0,
                       left: 0,
                     }}
@@ -235,7 +235,7 @@ const IndexPage = () => {
                   position: "fixed",
                   bottom: "20px",
                   right: "20px",
-                  zIndex: 1000,
+                  zIndex: 300,
                 }}
               >
                 <ClientOnly>
@@ -263,7 +263,7 @@ const IndexPage = () => {
                     position: "fixed",
                     bottom: "90px",
                     right: "90px",
-                    zIndex: 1000,
+                    zIndex: 400,
                     padding: "20px",
                     maxWidth: "350px",
                     backgroundColor: "rgba(255, 255, 255, 0.95)",

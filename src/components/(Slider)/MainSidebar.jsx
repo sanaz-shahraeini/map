@@ -339,8 +339,8 @@ const MainSidebar = ({
                   <ListItem key={`skeleton-${index}`} sx={{ py: 1 }}>
                     <Skeleton
                       variant="rectangular"
-                      width={60}
-                      height={60}
+                      width={64}
+                      height={64}
                       sx={{ mr: 2 }}
                     />
                     <Box sx={{ width: "100%" }}>
@@ -365,8 +365,8 @@ const MainSidebar = ({
                     >
                       <Box
                         sx={{
-                          width: "65px",
-                          height: "60px",
+                          width: "64px",
+                          height: "64px",
                           backgroundColor: "#f7f7f7",
                           display: "flex",
                           alignItems: "center",
@@ -389,9 +389,9 @@ const MainSidebar = ({
                               alt={product.name}
                               onError={handleImageError}
                               sx={{
-                                maxWidth: "100%",
-                                maxHeight: "100%",
-                                objectFit: "contain",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
                               }}
                             />
                             <Box
@@ -408,7 +408,7 @@ const MainSidebar = ({
                                 color: "#00897B",
                               }}
                             >
-                              <ViewInArIcon sx={{ fontSize: "28px" }} />
+                              <ViewInArIcon sx={{ fontSize: "32px" }} />
                             </Box>
                           </>
                         ) : (
@@ -428,7 +428,7 @@ const MainSidebar = ({
                               },
                             }}
                           >
-                            <ViewInArIcon sx={{ fontSize: "28px" }} />
+                            <ViewInArIcon sx={{ fontSize: "32px" }} />
                           </Box>
                         )}
                       </Box>

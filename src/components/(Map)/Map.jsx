@@ -121,6 +121,7 @@ const MapComponent = forwardRef(
       if (!productsLoading) {
         setLoading(true);
       }
+      
 
       if (!productsLoading && !productsError) {
         console.log("Processing product data for map...");
@@ -755,7 +756,7 @@ const MapComponent = forwardRef(
               left: 0,
               right: 0,
               bottom: 0,
-              zIndex: 9998,
+              zIndex: 900,
               filter: "blur(2px)",
               WebkitFilter: "blur(2px)",
             }}
@@ -784,7 +785,7 @@ const MapComponent = forwardRef(
               justifyContent: "center",
               alignItems: "center",
               background: "rgba(255, 255, 255, 0.5)",
-              zIndex: 9999,
+              zIndex: 800,
             }}
           >
             <Loading message={loadingMessage} />
@@ -814,7 +815,7 @@ const MapComponent = forwardRef(
               position: "absolute",
               top: "10px",
               left: "10px",
-              zIndex: 999,
+              zIndex: 700,
               display: "flex",
               flexDirection: "column",
               gap: "5px",
@@ -892,7 +893,7 @@ const MapComponent = forwardRef(
                 top: "10px",
                 left: "50%",
                 transform: "translateX(-50%)",
-                zIndex: 1,
+                zIndex: 600,
                 background: "rgba(255,255,255,0.8)",
                 padding: "10px",
                 borderRadius: "5px",
@@ -907,7 +908,7 @@ const MapComponent = forwardRef(
                 position: "absolute",
                 top: "10px",
                 right: "10px",
-                zIndex: 1,
+                zIndex: 500,
                 background: "rgba(255,255,255,0.8)",
                 padding: "5px",
                 borderRadius: "5px",
@@ -983,7 +984,7 @@ const MapComponent = forwardRef(
 
         <style jsx global>{`
           .leaflet-popup {
-            z-index: 99999 !important;
+            z-index: 400 !important;
           }
           .leaflet-popup-content-wrapper {
             border-radius: 12px;
@@ -996,40 +997,40 @@ const MapComponent = forwardRef(
           }
           /* Ensure popup container is above everything */
           .leaflet-pane {
-            z-index: 99000 !important;
+            z-index: 300 !important;
           }
           .leaflet-popup-pane {
-            z-index: 99500 !important;
+            z-index: 200 !important;
           }
           .leaflet-overlay-pane {
-            z-index: 98500 !important;
+            z-index: 100 !important;
           }
           /* Fix for markers being hidden behind map tiles */
           .leaflet-map-pane {
-            z-index: 98000 !important;
+            z-index: 0 !important;
           }
           .leaflet-tile-pane {
-            z-index: 97500 !important;
+            z-index: 0 !important;
           }
           .leaflet-marker-pane {
-            z-index: 97600 !important;
+            z-index: 0 !important;
           }
           .leaflet-shadow-pane {
-            z-index: 97550 !important;
+            z-index: 0 !important;
           }
           /* Ensure SVG layers (where circles are rendered) appear above tiles */
           .leaflet-objects-pane {
-            z-index: 97650 !important;
+            z-index: 0 !important;
           }
           .leaflet-svg-pane {
-            z-index: 97700 !important;
+            z-index: 0 !important;
           }
           /* Make sure popups are always on top */
           .leaflet-tooltip-pane {
-            z-index: 99600 !important;
+            z-index: 0 !important;
           }
           .leaflet-popup-pane {
-            z-index: 99700 !important;
+            z-index: 0 !important;
           }
           @keyframes pulse {
             0% {

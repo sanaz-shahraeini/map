@@ -102,20 +102,65 @@ const SearchBar = ({ mapRef }) => {
 
   const handleProductSelect = (product) => {
     const productName = product.product_name || product.name;
+    console.log("Product selected:", product);
+
+    // Set search query and context
     setSearchQuery(productName);
     setContextSearchQuery(productName);
+
+    // Hide the search results immediately
+    setShowResults(false);
 
     // Make a deep copy to ensure all properties are passed
     const productToSelect = { ...product };
 
-    // Log details before setting
-    console.log("Selecting product:", productName, productToSelect);
-
     // Set the selected product in the context
     setSelectedProduct(productToSelect);
 
-    // Hide the search results after selection
-    setShowResults(false);
+    // Center map on the selected product's location if coordinates are available
+    if (productToSelect.lat && productToSelect.lng) {
+      console.log(
+        "Attempting to center map on:",
+        productToSelect.lat,
+        productToSelect.lng
+      );
+
+      // Try to center the map multiple times to handle timing issues
+      const maxAttempts = 5;
+      let attempts = 0;
+
+      const tryToCenter = () => {
+        if (mapRef.current && mapRef.current.centerOnLocation) {
+          try {
+            mapRef.current.centerOnLocation(
+              parseFloat(productToSelect.lat),
+              parseFloat(productToSelect.lng),
+              8
+            );
+            console.log("Successfully centered map");
+          } catch (error) {
+            console.error("Error centering map:", error);
+          }
+        } else {
+          attempts++;
+          if (attempts < maxAttempts) {
+            console.log(
+              `Map ref not ready, attempt ${attempts} of ${maxAttempts}`
+            );
+            setTimeout(tryToCenter, 100);
+          } else {
+            console.warn("Failed to center map after maximum attempts");
+          }
+        }
+      };
+
+      tryToCenter();
+    } else {
+      console.warn("Unable to center map - missing coordinates:", {
+        lat: productToSelect.lat,
+        lng: productToSelect.lng,
+      });
+    }
   };
 
   const handleSearchClick = () => {
@@ -173,7 +218,7 @@ const SearchBar = ({ mapRef }) => {
         top: isMobile ? "70px" : "100px",
         left: 0,
         right: 0,
-        zIndex: 9999,
+        zIndex: 999,
         pointerEvents: "auto",
       }}
     >
@@ -185,6 +230,7 @@ const SearchBar = ({ mapRef }) => {
           width: isMobile ? "100%" : "70%",
           padding: isMobile ? "0 10px" : 0,
           position: "relative",
+          zIndex: 999,
         }}
       >
         <Grid
@@ -193,7 +239,7 @@ const SearchBar = ({ mapRef }) => {
           sx={{
             marginRight: isMobile ? "5px" : "8px",
             position: "relative",
-            zIndex: 10000,
+            zIndex: 999,
           }}
         >
           <TextField
@@ -208,7 +254,7 @@ const SearchBar = ({ mapRef }) => {
               borderRadius: "25px",
               transition: "all 0.3s ease",
               position: "relative",
-              zIndex: 10000,
+              zIndex: 999,
               "& .MuiOutlinedInput-root": {
                 height: isMobile ? "40px" : "45px",
                 borderRadius: "25px",
@@ -270,12 +316,12 @@ const SearchBar = ({ mapRef }) => {
             <Paper
               elevation={3}
               sx={{
-                position: "absolute",
-                top: "100%",
+                position: "static",
+                top: "2%",
                 left: 0,
                 right: 0,
-                zIndex: 10001,
-                marginTop: "5px",
+                zIndex: 1002,
+                marginTop: "1px",
                 width: "100%",
                 borderRadius: isMobile ? "8px" : "12px",
                 overflow: "hidden",
@@ -286,6 +332,34 @@ const SearchBar = ({ mapRef }) => {
                 overflowY: "auto",
                 WebkitOverflowScrolling: "touch",
                 touchAction: "pan-y",
+                position: "relative",
+                animation: "fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                "@keyframes fadeIn": {
+                  "0%": {
+                    opacity: 0,
+                    transform: isMobile ? "translateY(100%)" : "scale(0.95)",
+                  },
+                  "100%": {
+                    opacity: 1,
+                    transform: isMobile ? "translateY(0)" : "scale(1)",
+                  },
+                },
+                "&::-webkit-scrollbar": {
+                  width: isMobile ? "4px" : "8px",
+                },
+                "&::-webkit-scrollbar-track": {
+                  background: "#f5f5f5",
+                  borderRadius: isMobile ? "4px" : "8px",
+                  margin: isMobile ? "4px" : "8px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "#80CBC4",
+                  borderRadius: isMobile ? "4px" : "8px",
+                  border: "2px solid #f5f5f5",
+                  "&:hover": {
+                    background: "#4DB6AC",
+                  },
+                },
               }}
             >
               <Box p={isMobile ? 1 : 2}>
@@ -317,7 +391,12 @@ const SearchBar = ({ mapRef }) => {
                             backgroundColor: "#E0F2F1",
                           },
                         }}
-                        onClick={() => handleProductSelect(product)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleProductSelect(product);
+                        }}
+                        button
                       >
                         <ListItemIcon>
                           <Box
@@ -453,24 +532,27 @@ const SearchBar = ({ mapRef }) => {
         sx={{
           display: "flex",
           justifyContent: "center",
-          alignItems: isMobile ? "flex-end" : "flex-start",
+          alignItems: isMobile ? "flex-end" : "center",
           position: "fixed",
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          zIndex: 10002,
+          zIndex: 1003,
           margin: 0,
           WebkitOverflowScrolling: "touch",
+          p: isMobile ? 0 : 3,
         }}
       >
         <Box
           onClick={(e) => e.stopPropagation()}
           sx={{
-            width: isMobile ? "100%" : "1200px",
-            maxHeight: isMobile ? "85vh" : "85vh",
+            width: isMobile ? "100%" : "90%",
+            maxWidth: isMobile ? "100%" : "1400px",
+            maxHeight: isMobile ? "85vh" : "90vh",
+            minHeight: isMobile ? "auto" : "50vh",
             bgcolor: "white",
-            padding: isMobile ? "16px" : 4,
+            padding: isMobile ? "16px" : "32px",
             borderRadius: isMobile ? "20px 20px 0 0" : "24px",
             boxShadow: "0 20px 50px rgba(0, 0, 0, 0.2)",
             overflowY: "auto",
@@ -481,24 +563,24 @@ const SearchBar = ({ mapRef }) => {
             "@keyframes fadeIn": {
               "0%": {
                 opacity: 0,
-                transform: isMobile ? "translateY(100%)" : "translateY(-30px)",
+                transform: isMobile ? "translateY(100%)" : "scale(0.95)",
               },
               "100%": {
                 opacity: 1,
-                transform: "translateY(0)",
+                transform: isMobile ? "translateY(0)" : "scale(1)",
               },
             },
             "&::-webkit-scrollbar": {
-              width: isMobile ? "4px" : "10px",
+              width: isMobile ? "4px" : "8px",
             },
             "&::-webkit-scrollbar-track": {
               background: "#f5f5f5",
-              borderRadius: isMobile ? "4px" : "10px",
-              margin: isMobile ? "4px" : "10px",
+              borderRadius: isMobile ? "4px" : "8px",
+              margin: isMobile ? "4px" : "8px",
             },
             "&::-webkit-scrollbar-thumb": {
               background: "#80CBC4",
-              borderRadius: isMobile ? "4px" : "10px",
+              borderRadius: isMobile ? "4px" : "8px",
               border: "2px solid #f5f5f5",
               "&:hover": {
                 background: "#4DB6AC",
@@ -515,22 +597,22 @@ const SearchBar = ({ mapRef }) => {
               borderBottom: "2px solid #E0F2F1",
               paddingBottom: isMobile ? 2 : 3,
               flexDirection: isMobile ? "column" : "row",
-              gap: isMobile ? 2 : 0,
+              gap: isMobile ? 2 : 3,
             }}
           >
             <Typography
-              variant={isMobile ? "body2" : "body1"}
+              variant={isMobile ? "body2" : "h6"}
               sx={{
                 color: "#00897B",
                 fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 gap: isMobile ? 1 : 2,
-                fontSize: isMobile ? "14px" : "inherit",
+                fontSize: isMobile ? "14px" : "1.25rem",
               }}
             >
-              <PublicIcon sx={{ fontSize: isMobile ? 18 : 25 }} />
-              Products from {countryNames[page - 1] || "All Countries"}
+              <PublicIcon sx={{ fontSize: isMobile ? 18 : 28 }} />
+              Products from {countryNames[page - 0] || "All Countries"}
             </Typography>
             <Box
               sx={{
@@ -538,7 +620,7 @@ const SearchBar = ({ mapRef }) => {
                 alignItems: "center",
                 gap: isMobile ? 1 : 2,
                 backgroundColor: "#E0F2F1",
-                padding: isMobile ? "6px 12px" : "8px 16px",
+                padding: isMobile ? "6px 12px" : "12px 24px",
                 borderRadius: "12px",
                 width: isMobile ? "100%" : "auto",
                 justifyContent: isMobile ? "center" : "flex-start",
@@ -549,7 +631,7 @@ const SearchBar = ({ mapRef }) => {
                 sx={{
                   color: "#00897B",
                   fontWeight: 600,
-                  fontSize: isMobile ? "12px" : "inherit",
+                  fontSize: isMobile ? "12px" : "1rem",
                 }}
               >
                 {countryNames.length} Countries
@@ -562,7 +644,7 @@ const SearchBar = ({ mapRef }) => {
                 sx={{
                   color: "#00897B",
                   fontWeight: 600,
-                  fontSize: isMobile ? "12px" : "inherit",
+                  fontSize: isMobile ? "12px" : "1rem",
                 }}
               >
                 Page {page} of {countryNames.length}
@@ -576,8 +658,9 @@ const SearchBar = ({ mapRef }) => {
               display: "grid",
               gridTemplateColumns: isMobile
                 ? "1fr"
-                : "repeat(auto-fill, minmax(500px, 1fr))",
+                : "repeat(auto-fill, minmax(600px, 1fr))",
               gap: isMobile ? 2 : 3,
+              mt: isMobile ? 2 : 4,
             }}
           >
             {productsForCurrentPage.length > 0 ? (
@@ -590,8 +673,8 @@ const SearchBar = ({ mapRef }) => {
                     backgroundColor:
                       product.source === "EPD" ? "#E8F5E9" : "#ffffff",
                     height: "auto",
-                    padding: isMobile ? 2 : 3,
-                    borderRadius: isMobile ? "12px" : "16px",
+                    padding: isMobile ? 2 : 4,
+                    borderRadius: isMobile ? "12px" : "20px",
                     border: "1px solid",
                     borderColor:
                       product.source === "EPD" ? "#A5D6A7" : "#E0E0E0",
@@ -610,9 +693,9 @@ const SearchBar = ({ mapRef }) => {
                 >
                   <Box
                     sx={{
-                      width: isMobile ? "40px" : "60px",
-                      height: isMobile ? "40px" : "60px",
-                      marginRight: isMobile ? 1.5 : 2,
+                      width: isMobile ? "40px" : "80px",
+                      height: isMobile ? "40px" : "80px",
+                      marginRight: isMobile ? 1.5 : 3,
                       position: "relative",
                       flexShrink: 0,
                     }}
@@ -622,24 +705,24 @@ const SearchBar = ({ mapRef }) => {
                       src={
                         product.image_url || "/public/images/images(map).png"
                       }
-                      alt={product.name}
+                      alt={"No image"}
                       sx={{
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
-                        borderRadius: isMobile ? "8px" : "12px",
+                        borderRadius: isMobile ? "8px" : "16px",
                       }}
                     />
                   </Box>
 
                   <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                     <Typography
-                      variant={isMobile ? "body2" : "subtitle1"}
+                      variant={isMobile ? "body2" : "h6"}
                       sx={{
                         fontWeight: 500,
                         color: "#424242",
-                        fontSize: isMobile ? "13px" : "15px",
-                        mb: 0.5,
+                        fontSize: isMobile ? "13px" : "1.1rem",
+                        mb: isMobile ? 0.5 : 1,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -651,7 +734,7 @@ const SearchBar = ({ mapRef }) => {
                       variant="body2"
                       sx={{
                         color: "#666",
-                        fontSize: isMobile ? "11px" : "14px",
+                        fontSize: isMobile ? "11px" : "0.9rem",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -666,7 +749,7 @@ const SearchBar = ({ mapRef }) => {
                       display: "flex",
                       flexDirection: isMobile ? "column" : "row",
                       gap: isMobile ? 1 : 2,
-                      ml: isMobile ? 1 : 2,
+                      ml: isMobile ? 1 : 3,
                     }}
                   >
                     {product.source === "EPD" && product.pdf_url && (
@@ -675,15 +758,16 @@ const SearchBar = ({ mapRef }) => {
                         size={isMobile ? "small" : "medium"}
                         sx={{
                           backgroundColor: "#C8E6C9",
-                          padding: isMobile ? "6px" : "8px",
+                          padding: isMobile ? "6px" : "12px",
                           "&:hover": {
                             backgroundColor: "#A5D6A7",
+                            transform: "scale(1.1)",
                           },
                         }}
                       >
                         <DownloadIcon
                           sx={{
-                            fontSize: isMobile ? "16px" : "20px",
+                            fontSize: isMobile ? "16px" : "24px",
                             color: "#2E7D32",
                           }}
                         />
@@ -693,15 +777,16 @@ const SearchBar = ({ mapRef }) => {
                       size={isMobile ? "small" : "medium"}
                       sx={{
                         backgroundColor: "#E0F2F1",
-                        padding: isMobile ? "6px" : "8px",
+                        padding: isMobile ? "6px" : "12px",
                         "&:hover": {
                           backgroundColor: "#B2DFDB",
+                          transform: "scale(1.1)",
                         },
                       }}
                     >
                       <InfoOutlinedIcon
                         sx={{
-                          fontSize: isMobile ? "16px" : "20px",
+                          fontSize: isMobile ? "16px" : "24px",
                           color: "#00897B",
                         }}
                       />
@@ -711,13 +796,13 @@ const SearchBar = ({ mapRef }) => {
               ))
             ) : (
               <Typography
-                variant="h6"
+                variant={isMobile ? "h6" : "h5"}
                 sx={{
                   textAlign: "center",
-                  py: 6,
+                  py: isMobile ? 6 : 8,
                   color: "#666",
                   gridColumn: "1 / -1",
-                  fontSize: isMobile ? "16px" : "20px",
+                  fontSize: isMobile ? "16px" : "24px",
                 }}
               >
                 No products available for{" "}
@@ -730,7 +815,7 @@ const SearchBar = ({ mapRef }) => {
             sx={{
               display: "flex",
               justifyContent: "center",
-              marginTop: 4,
+              marginTop: isMobile ? 4 : 6,
               borderTop: "2px solid #E0F2F1",
               paddingTop: isMobile ? 2 : 4,
             }}

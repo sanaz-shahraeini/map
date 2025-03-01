@@ -287,7 +287,7 @@ export default function VerticalToggleButtons({
           position: "fixed",
           bottom: "20px",
           right: "35px",
-          zIndex: 1000,
+          zIndex: 300,
           borderRadius: "20px",
           background: "rgba(255, 255, 255, 0.9)",
           backdropFilter: "blur(10px)",

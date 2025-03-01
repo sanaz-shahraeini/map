@@ -47,8 +47,6 @@ const Header = () => {
     setSelectedLanguage(event.target.value);
   };
 
-  
-
   return (
     <AppBar
       position="fixed"
@@ -60,7 +58,7 @@ const Header = () => {
         color: "#424242",
         zIndex: 1100,
         height: "64px",
-        display: { xs: 'none', sm: 'block' }
+        display: { xs: "none", sm: "block" },
       }}
     >
       <Toolbar sx={{ justifyContent: "space-between", minHeight: "64px" }}>
@@ -73,7 +71,7 @@ const Header = () => {
               color: "#00897B",
               letterSpacing: "0.5px",
               mr: 1,
-              display: { xs: 'none', sm: 'flex' },
+              display: { xs: "none", sm: "flex" },
               alignItems: "center",
             }}
           >

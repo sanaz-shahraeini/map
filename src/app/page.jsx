@@ -138,7 +138,7 @@ const IndexPage = () => {
               container
               spacing={1}
               sx={{
-                zIndex: 200,
+                zIndex: 2,
                 position: "relative",
                 mt: 2,
               }}
@@ -235,7 +235,7 @@ const IndexPage = () => {
                   position: "fixed",
                   bottom: "20px",
                   right: "20px",
-                  zIndex: 300,
+                  zIndex: 1,
                 }}
               >
                 <ClientOnly>
@@ -261,9 +261,9 @@ const IndexPage = () => {
                   elevation={3}
                   sx={{
                     position: "fixed",
-                    bottom: "90px",
+                    bottom: "50px",
                     right: "90px",
-                    zIndex: 400,
+                    zIndex: 2,
                     padding: "20px",
                     maxWidth: "350px",
                     backgroundColor: "rgba(255, 255, 255, 0.95)",
@@ -271,7 +271,7 @@ const IndexPage = () => {
                     borderRadius: "12px",
                     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
                     border: "1px solid rgba(0, 137, 123, 0.1)",
-                    display: showInfoCard ? "block" : "none",
+                    
                     transition: "opacity 0.3s ease-in-out",
                     opacity: showInfoCard ? 1 : 0,
                   }}

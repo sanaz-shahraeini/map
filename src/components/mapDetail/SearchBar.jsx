@@ -209,7 +209,7 @@ const SearchBar = ({ mapRef }) => {
   return (
     <Box
       sx={{
-        display: "flex",
+        display: isLoading ? "none" : "flex",
         flexDirection: "column",
         alignItems: "center",
         padding: isMobile ? "5px" : "10px",

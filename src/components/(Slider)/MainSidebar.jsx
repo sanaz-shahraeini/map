@@ -76,8 +76,12 @@ const MainSidebar = ({
       try {
         let productsData = [];
 
-        // Fetch EPD products if filterEpdOnly is true or we need all products
-        if (filterEpdOnly || selectedPriority === "New arrivals") {
+        // Always fetch from EPD API when a category is selected or filterEpdOnly is true
+        if (
+          selectedCategory !== "all" ||
+          filterEpdOnly ||
+          selectedPriority === "New arrivals"
+        ) {
           const epdResponse = await fetch(
             "https://epd-fullstack-project.vercel.app/api/ibudata/"
           );
@@ -97,7 +101,7 @@ const MainSidebar = ({
             pdf_url: item.pdf_url || null,
             geo: item.geo || null,
             company_name: null,
-            created_at: null,
+            created_at: null, // EPD API doesn't provide created_at, so we'll use ref_year for sorting
             isFromEPDAPI: true,
             type: "EPD",
             ref_year: item.ref_year,
@@ -107,8 +111,12 @@ const MainSidebar = ({
           productsData = [...epdProducts];
         }
 
-        // Fetch regular products if not filtering for EPD only
-        if (!filterEpdOnly && selectedPriority === "Top products") {
+        // Fetch regular products if not filtering for EPD only and no specific category is selected
+        if (
+          !filterEpdOnly &&
+          selectedCategory === "all" &&
+          selectedPriority === "Top products"
+        ) {
           const productsResponse = await fetch(
             "https://epd-fullstack-project.vercel.app/api/products/"
           );
@@ -151,7 +159,7 @@ const MainSidebar = ({
     };
 
     fetchProducts();
-  }, [filterEpdOnly, selectedPriority]);
+  }, [filterEpdOnly, selectedPriority, selectedCategory]);
 
   // Handle priority change
   const handlePriorityChange = (event) => {
@@ -227,14 +235,25 @@ const MainSidebar = ({
     // Sort based on priority
     if (selectedPriority === "New arrivals") {
       filtered = filtered.sort((a, b) => {
+        // First try to sort by created_at timestamp
+        if (a.created_at && b.created_at) {
+          return new Date(b.created_at) - new Date(a.created_at);
+        }
+
+        // If created_at is not available, fall back to ref_year
         const yearA = a.ref_year || 0;
         const yearB = b.ref_year || 0;
         return yearB - yearA;
       });
     }
 
-    // Limit to 15 products
-    filtered = filtered.slice(0, 15);
+    // Limit to 10 products when showing EPD products
+    if (selectedCategory !== "all" || filterEpdOnly) {
+      filtered = filtered.slice(0, 10);
+    } else {
+      // Limit to 15 products for regular view
+      filtered = filtered.slice(0, 15);
+    }
 
     console.log("Filtered products:", filtered);
     return filtered;

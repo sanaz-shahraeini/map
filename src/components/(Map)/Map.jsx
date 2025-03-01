@@ -273,7 +273,7 @@ const MapComponent = forwardRef(
       });
     }, [loading, productsLoading, processingData, isLoading]);
 
-    const ZoomControl = ({ setZoom, zoom }) => {
+    const ZoomControl = ({ setZoom, zoom, getCircleRadius }) => {
       // 1. All useState hooks
       const [isMounted, setIsMounted] = useState(false);
 
@@ -315,6 +315,11 @@ const MapComponent = forwardRef(
               const currentZoom = map.getZoom();
               if (typeof currentZoom === "number") {
                 setZoom(currentZoom);
+                console.log(
+                  `Zoom changed to: ${currentZoom}, circle radius: ${getCircleRadius(
+                    currentZoom
+                  )}`
+                );
               }
             } catch (error) {
               console.warn("Error updating zoom:", error);
@@ -638,19 +643,24 @@ const MapComponent = forwardRef(
     );
 
     const getCircleRadius = (zoom) => {
-      let radius;
-      if (zoom > 3 && zoom <= 5) {
-        radius = 600000 / (zoom * 4);
-      } else if (zoom > 5 && zoom <= 10) {
-        radius = 600000 / (zoom * 20);
-      } else if (zoom > 10 && zoom <= 15) {
-        radius = 5000 / zoom;
-      } else if (zoom > 15) {
-        radius = 100;
+      // More responsive scaling based on zoom level
+      if (zoom <= 3) {
+        return 150000; // Very zoomed out - large circles
+      } else if (zoom <= 5) {
+        return 80000; // Zoomed out - medium-large circles
+      } else if (zoom <= 7) {
+        return 40000; // Country level - medium circles
+      } else if (zoom <= 9) {
+        return 20000; // Region level - medium-small circles
+      } else if (zoom <= 11) {
+        return 10000; // City level - small circles
+      } else if (zoom <= 13) {
+        return 5000; // Neighborhood level - smaller circles
+      } else if (zoom <= 15) {
+        return 2000; // Street level - very small circles
       } else {
-        radius = 150000;
+        return 1000; // Maximum zoom - tiny circles
       }
-      return radius;
     };
 
     useEffect(() => {
@@ -820,7 +830,11 @@ const MapComponent = forwardRef(
             [90, 180],
           ]}
         >
-          <ZoomControl setZoom={setZoom} zoom={zoom} />
+          <ZoomControl
+            setZoom={setZoom}
+            zoom={zoom}
+            getCircleRadius={getCircleRadius}
+          />
           <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
 
           {/* Filter status indicators */}
@@ -956,7 +970,7 @@ const MapComponent = forwardRef(
 
             return (
               <Circle
-                key={`${location.lat}-${location.lng}-${index}`}
+                key={`${location.lat}-${location.lng}-${index}-zoom-${zoom}`}
                 center={[location.lat, location.lng]}
                 radius={getCircleRadius(zoom)}
                 pathOptions={circleOptions}

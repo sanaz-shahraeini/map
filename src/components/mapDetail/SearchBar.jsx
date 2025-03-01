@@ -16,6 +16,9 @@ import {
   useMediaQuery,
   useTheme,
   Paper,
+  Snackbar,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import SearchIcon from "@mui/icons-material/Search";
@@ -35,6 +38,9 @@ const SearchBar = ({ mapRef }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [showResults, setShowResults] = useState(false);
+  const [requestSending, setRequestSending] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState(false);
+  const [requestProduct, setRequestProduct] = useState(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -206,6 +212,36 @@ const SearchBar = ({ mapRef }) => {
   //   : [];
   // const totalPages = Math.ceil((filteredProducts?.length || 0) / itemsPerPage);
 
+  const handleSendRequest = (product) => {
+    console.log("Sending request for product:", product.name);
+    setRequestProduct(product);
+    setRequestSending(true);
+
+    // Simulate sending a request
+    setTimeout(() => {
+      setRequestSending(false);
+      setRequestSuccess(true);
+      console.log("Request success set to:", true);
+
+      // Auto-hide success message after 5 seconds (increased from 3)
+      setTimeout(() => {
+        setRequestSuccess(false);
+        setRequestProduct(null);
+      }, 5000);
+    }, 1000); // Reduced from 1500ms to make it faster
+  };
+
+  const handleCloseSuccess = () => {
+    console.log("Closing success notification");
+    setRequestSuccess(false);
+    setRequestProduct(null);
+  };
+
+  // Add a useEffect to log when requestSuccess changes
+  useEffect(() => {
+    console.log("requestSuccess state changed to:", requestSuccess);
+  }, [requestSuccess]);
+
   return (
     <Box
       sx={{
@@ -227,17 +263,20 @@ const SearchBar = ({ mapRef }) => {
         sx={{
           display: "flex",
           justifyContent: "center",
-          width: isMobile ? "100%" : "70%",
+          width: isMobile ? "85%" : "70%",
           padding: isMobile ? "0 10px" : 0,
           position: "relative",
           zIndex: 999,
+          flexDirection: "row",
+          alignItems: "center",
+          flexWrap: "nowrap",
         }}
       >
         <Grid
-          xs={isMobile ? 9 : 9}
+          xs={isMobile ? 10 : 10}
           container={false}
           sx={{
-            marginRight: isMobile ? "5px" : "8px",
+            marginRight: isMobile ? "5px" : "10px",
             position: "relative",
             zIndex: 999,
           }}
@@ -474,12 +513,14 @@ const SearchBar = ({ mapRef }) => {
 
         <Grid
           container={false}
-          xs={isMobile ? 3 : 2}
+          xs={isMobile ? 2 : 2}
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: isMobile ? "flex-end" : "center",
+            justifyContent: "center",
             paddingRight: isMobile ? "5px" : 0,
+            paddingLeft: isMobile ? "0px" : "5px",
+            height: "100%",
           }}
         >
           <Fab
@@ -492,6 +533,7 @@ const SearchBar = ({ mapRef }) => {
               width: isMobile ? "32px" : "40px",
               height: isMobile ? "32px" : "40px",
               minHeight: "unset",
+              marginLeft: 0,
               "&:hover": {
                 background: "#E0F2F1",
                 boxShadow: "0 6px 16px rgba(0, 0, 0, 0.12)",
@@ -791,6 +833,38 @@ const SearchBar = ({ mapRef }) => {
                         }}
                       />
                     </IconButton>
+                    <Tooltip title="Send product request" arrow>
+                      <IconButton
+                        size={isMobile ? "small" : "medium"}
+                        onClick={() => handleSendRequest(product)}
+                        disabled={requestSending}
+                        sx={{
+                          backgroundColor: "#B2DFDB",
+                          padding: isMobile ? "6px" : "12px",
+                          "&:hover": {
+                            backgroundColor: "#80CBC4",
+                            transform: "scale(1.1)",
+                          },
+                          position: "relative",
+                        }}
+                      >
+                        {requestSending &&
+                        requestProduct?.name === product.name ? (
+                          <CircularProgress
+                            size={isMobile ? 16 : 24}
+                            thickness={5}
+                            sx={{ color: "#00796B" }}
+                          />
+                        ) : (
+                          <SendIcon
+                            sx={{
+                              fontSize: isMobile ? "16px" : "24px",
+                              color: "#00796B",
+                            }}
+                          />
+                        )}
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </ListItem>
               ))
@@ -840,6 +914,261 @@ const SearchBar = ({ mapRef }) => {
                 },
               }}
             />
+          </Box>
+        </Box>
+      </Modal>
+
+      <Snackbar
+        open={requestSuccess}
+        autoHideDuration={5000}
+        onClose={handleCloseSuccess}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{
+          bottom: isMobile ? 16 : 24,
+          zIndex: 9999,
+        }}
+      >
+        <Paper
+          elevation={12}
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: "16px",
+            boxShadow: "0 10px 30px rgba(0, 137, 123, 0.4)",
+            width: isMobile ? "90%" : "400px",
+            animation: "slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+            "@keyframes slideUp": {
+              "0%": {
+                opacity: 0,
+                transform: "translateY(50px)",
+              },
+              "100%": {
+                opacity: 1,
+                transform: "translateY(0)",
+              },
+            },
+            border: "1px solid #80CBC4",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: "4px",
+              background: "linear-gradient(90deg, #00897B 0%, #4DB6AC 100%)",
+              animation: "shrink 4s linear forwards",
+              "@keyframes shrink": {
+                "0%": { width: "100%" },
+                "100%": { width: "0%" },
+              },
+            }}
+          />
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              padding: isMobile ? "16px" : "20px",
+              background: "linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)",
+              position: "relative",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                width: isMobile ? "40px" : "50px",
+                height: isMobile ? "40px" : "50px",
+                borderRadius: "50%",
+                backgroundColor: "#00897B",
+                marginRight: isMobile ? "12px" : "16px",
+                boxShadow: "0 4px 12px rgba(0, 137, 123, 0.2)",
+                animation: "pulse 1.5s infinite",
+                "@keyframes pulse": {
+                  "0%": {
+                    boxShadow: "0 0 0 0 rgba(0, 137, 123, 0.4)",
+                  },
+                  "70%": {
+                    boxShadow: "0 0 0 10px rgba(0, 137, 123, 0)",
+                  },
+                  "100%": {
+                    boxShadow: "0 0 0 0 rgba(0, 137, 123, 0)",
+                  },
+                },
+              }}
+            >
+              <SendIcon
+                sx={{ color: "white", fontSize: isMobile ? "20px" : "24px" }}
+              />
+            </Box>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  color: "#00695C",
+                  fontSize: isMobile ? "14px" : "16px",
+                  marginBottom: "4px",
+                }}
+              >
+                Request Sent Successfully!
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#546E7A",
+                  fontSize: isMobile ? "12px" : "14px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                Your request for{" "}
+                <Box
+                  component="span"
+                  sx={{
+                    fontWeight: 700,
+                    color: "#00796B",
+                    mx: 0.5,
+                    maxWidth: isMobile ? "120px" : "200px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    display: "inline-block",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  {requestProduct?.name}
+                </Box>{" "}
+                has been submitted
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={handleCloseSuccess}
+              sx={{
+                color: "#546E7A",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 137, 123, 0.1)",
+                },
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  width: "18px",
+                  height: "18px",
+                  position: "relative",
+                  "&::before, &::after": {
+                    content: '""',
+                    position: "absolute",
+                    width: "2px",
+                    height: "18px",
+                    backgroundColor: "#546E7A",
+                    top: 0,
+                    left: "8px",
+                  },
+                  "&::before": {
+                    transform: "rotate(45deg)",
+                  },
+                  "&::after": {
+                    transform: "rotate(-45deg)",
+                  },
+                }}
+              />
+            </IconButton>
+          </Box>
+          <Box
+            sx={{
+              height: "6px",
+              background: "linear-gradient(90deg, #B2DFDB 0%, #E0F2F1 100%)",
+            }}
+          />
+        </Paper>
+      </Snackbar>
+
+      {/* Fallback Success Modal */}
+      <Modal
+        open={requestSuccess}
+        onClose={handleCloseSuccess}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 10000,
+        }}
+      >
+        <Box
+          sx={{
+            width: isMobile ? "90%" : "400px",
+            bgcolor: "background.paper",
+            borderRadius: "16px",
+            boxShadow: 24,
+            p: 4,
+            outline: "none",
+            border: "2px solid #00897B",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                backgroundColor: "#00897B",
+                mr: 2,
+              }}
+            >
+              <SendIcon sx={{ color: "white" }} />
+            </Box>
+            <Typography variant="h6" component="h2" sx={{ color: "#00695C" }}>
+              Request Sent!
+            </Typography>
+          </Box>
+          <Typography sx={{ mt: 2, color: "#546E7A" }}>
+            Your request for <strong>{requestProduct?.name}</strong> has been
+            successfully submitted.
+          </Typography>
+          <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
+            <Fab
+              size="small"
+              color="primary"
+              onClick={handleCloseSuccess}
+              sx={{
+                backgroundColor: "#00897B",
+                "&:hover": {
+                  backgroundColor: "#00796B",
+                },
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  width: "18px",
+                  height: "18px",
+                  position: "relative",
+                  "&::before, &::after": {
+                    content: '""',
+                    position: "absolute",
+                    width: "2px",
+                    height: "18px",
+                    backgroundColor: "white",
+                    top: 0,
+                    left: "8px",
+                  },
+                  "&::before": {
+                    transform: "rotate(45deg)",
+                  },
+                  "&::after": {
+                    transform: "rotate(-45deg)",
+                  },
+                }}
+              />
+            </Fab>
           </Box>
         </Box>
       </Modal>

@@ -68,6 +68,7 @@ const MapComponent = forwardRef(
       filtered: 0,
     });
     const [selectedLocation, setSelectedLocation] = useState(null);
+    const [processingData, setProcessingData] = useState(false);
 
     // 2. All useRef hooks
     const mapRef = useRef(null);
@@ -84,9 +85,11 @@ const MapComponent = forwardRef(
     const filteredProductsList = filteredProducts || [];
 
     // Combined loading state for all data fetching operations
-    const isLoading = loading || productsLoading;
+    const isLoading = loading || productsLoading || processingData;
     const loadingMessage = productsLoading
       ? "Loading product data..."
+      : processingData
+      ? "Processing location data..."
       : loading
       ? "Processing locations..."
       : "Loading map...";
@@ -120,8 +123,8 @@ const MapComponent = forwardRef(
       // Set loading state to true when starting to process locations, but only if we're not already loading products
       if (!productsLoading) {
         setLoading(true);
+        setProcessingData(true);
       }
-      
 
       if (!productsLoading && !productsError) {
         console.log("Processing product data for map...");
@@ -215,6 +218,7 @@ const MapComponent = forwardRef(
       // Use a small timeout to ensure state updates have processed
       const timer = setTimeout(() => {
         setLoading(false);
+        setProcessingData(false);
         console.log("Map loading complete, displaying markers");
       }, 500);
 
@@ -264,9 +268,10 @@ const MapComponent = forwardRef(
       console.log("Loading state:", {
         componentLoading: loading,
         productsLoading,
+        processingData,
         isLoading,
       });
-    }, [loading, productsLoading, isLoading]);
+    }, [loading, productsLoading, processingData, isLoading]);
 
     const ZoomControl = ({ setZoom, zoom }) => {
       // 1. All useState hooks
@@ -393,9 +398,15 @@ const MapComponent = forwardRef(
       console.log("Selected Product:", selectedProductContext);
       console.log("Year Range:", yearRange, "EPD Only:", filterEpdOnly);
 
+      // Show loading state when filtering a large number of locations
+      if (locations.length > 500) {
+        setProcessingData(true);
+      }
+
       // Early return if no locations
       if (!locations || locations.length === 0) {
         console.log("No locations available");
+        setProcessingData(false);
         return { filtered: [], epdStats: { total: 0, filtered: 0 } };
       }
 
@@ -584,6 +595,9 @@ const MapComponent = forwardRef(
         );
       }
 
+      // Clear loading state
+      setProcessingData(false);
+
       return {
         filtered,
         epdStats: {
@@ -756,8 +770,8 @@ const MapComponent = forwardRef(
               left: 0,
               right: 0,
               bottom: 0,
-              zIndex: 900,
-              filter: "blur(2px)",
+              zIndex: 500,
+              filter: "blur(2px)", // Remove blur completely
               WebkitFilter: "blur(2px)",
             }}
           >
@@ -784,11 +798,11 @@ const MapComponent = forwardRef(
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              background: "rgba(255, 255, 255, 0.5)",
-              zIndex: 800,
+              background: "rgba(255, 255, 255, 0.2)",
+              zIndex: 8000,
             }}
           >
-            <Loading message={loadingMessage} />
+            <Loading message={loadingMessage} fullScreen={false} />
           </div>
         </div>
       );
@@ -948,8 +962,8 @@ const MapComponent = forwardRef(
                 pathOptions={circleOptions}
               >
                 <Popup>
-                  <div style={{ maxWidth: "250px" }}>
-                    <h3>{location.product}</h3>
+                  <div className="map-popup-content">
+                    <h3 className="popup-title">{location.product}</h3>
                     <p>
                       <strong>Country:</strong> {location.country}
                       {isSelected && (
@@ -982,55 +996,121 @@ const MapComponent = forwardRef(
           })}
         </MapContainer>
 
+        {/* Loading overlay for when data is being processed but map is already shown */}
+        {processingData && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              background: "rgba(255, 255, 255, 0.2)",
+              zIndex: 8000, // Lower than popup z-index (9000)
+              pointerEvents: "none", // Allow clicking through the overlay
+            }}
+          >
+            <div
+              style={{
+                background: "rgba(255, 255, 255, 0.8)",
+                borderRadius: "12px",
+                padding: "15px 25px",
+                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <Loading message="Processing data..." />
+            </div>
+          </div>
+        )}
+
         <style jsx global>{`
           .leaflet-popup {
-            z-index: 400 !important;
+            z-index: 9000 !important;
+            position: relative;
           }
           .leaflet-popup-content-wrapper {
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(2px);
+            padding: 8px 12px;
+            max-width: 300px;
+            position: relative;
+            z-index: 9500 !important;
+          }
+          .leaflet-popup-content {
+            margin: 8px;
+            position: relative;
+            z-index: 9600 !important;
           }
           .leaflet-popup-tip {
             background: rgba(255, 255, 255, 0.95);
+            z-index: 9400 !important;
+            position: relative;
+          }
+          .map-popup-content {
+            font-family: "Arial", sans-serif;
+            color: #333;
+            padding: 5px;
+            position: relative;
+            z-index: 9700 !important;
+          }
+          .popup-title {
+            color: #00695c;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+          }
+          .map-popup-content p {
+            margin: 5px 0;
+            font-size: 14px;
+            line-height: 1.4;
+          }
+          .map-popup-content strong {
+            font-weight: 600;
+            color: #00796b;
           }
           /* Ensure popup container is above everything */
           .leaflet-pane {
-            z-index: 300 !important;
+            z-index: 400 !important;
           }
           .leaflet-popup-pane {
-            z-index: 200 !important;
+            z-index: 9000 !important;
           }
           .leaflet-overlay-pane {
-            z-index: 100 !important;
+            z-index: 300 !important;
           }
           /* Fix for markers being hidden behind map tiles */
           .leaflet-map-pane {
-            z-index: 0 !important;
+            z-index: 100 !important;
           }
           .leaflet-tile-pane {
-            z-index: 0 !important;
+            z-index: 200 !important;
           }
           .leaflet-marker-pane {
-            z-index: 0 !important;
+            z-index: 600 !important;
           }
           .leaflet-shadow-pane {
-            z-index: 0 !important;
+            z-index: 500 !important;
           }
           /* Ensure SVG layers (where circles are rendered) appear above tiles */
           .leaflet-objects-pane {
-            z-index: 0 !important;
+            z-index: 400 !important;
           }
           .leaflet-svg-pane {
-            z-index: 0 !important;
+            z-index: 700 !important;
           }
           /* Make sure popups are always on top */
           .leaflet-tooltip-pane {
-            z-index: 0 !important;
+            z-index: 800 !important;
           }
           .leaflet-popup-pane {
-            z-index: 0 !important;
+            z-index: 9000 !important;
           }
           @keyframes pulse {
             0% {

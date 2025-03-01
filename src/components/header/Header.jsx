@@ -31,7 +31,7 @@ const Header = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [selectedLanguage, setSelectedLanguage] = useState("en");
-  const [selectedCategory, setSelectedCategory] = useState("map");
+  const [selectedCategory, setSelectedCategory] = useState("Building Products");
 
   const handleLanguageChange = (event) => {
     setSelectedLanguage(event.target.value);

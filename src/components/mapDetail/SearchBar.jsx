@@ -82,6 +82,8 @@ const SearchBar = ({ mapRef }) => {
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && searchQuery.trim()) {
       setShowResults(true);
+    } else if (e.key === "Escape" && showResults) {
+      setShowResults(false);
     }
   };
 
@@ -114,9 +116,6 @@ const SearchBar = ({ mapRef }) => {
     setSearchQuery(productName);
     setContextSearchQuery(productName);
 
-    // Hide the search results immediately
-    setShowResults(false);
-
     // Make a deep copy to ensure all properties are passed
     const productToSelect = { ...product };
 
@@ -131,55 +130,86 @@ const SearchBar = ({ mapRef }) => {
         productToSelect.lng
       );
 
-      // Try to center the map multiple times to handle timing issues
-      const maxAttempts = 5;
-      let attempts = 0;
+      // Center map immediately with animation
+      if (mapRef.current && mapRef.current.centerOnLocation) {
+        try {
+          // Use a higher zoom level (12) for better visibility
+          mapRef.current.centerOnLocation(
+            parseFloat(productToSelect.lat),
+            parseFloat(productToSelect.lng),
+            12
+          );
+          console.log("Successfully centered map");
 
-      const tryToCenter = () => {
-        if (mapRef.current && mapRef.current.centerOnLocation) {
-          try {
-            mapRef.current.centerOnLocation(
-              parseFloat(productToSelect.lat),
-              parseFloat(productToSelect.lng),
-              8
-            );
-            console.log("Successfully centered map");
-          } catch (error) {
-            console.error("Error centering map:", error);
-          }
-        } else {
-          attempts++;
-          if (attempts < maxAttempts) {
-            console.log(
-              `Map ref not ready, attempt ${attempts} of ${maxAttempts}`
-            );
-            setTimeout(tryToCenter, 100);
-          } else {
-            console.warn("Failed to center map after maximum attempts");
-          }
+          // Close the dropdown after a brief delay to ensure smooth transition
+          setTimeout(() => {
+            setShowResults(false);
+            // Add a slight delay before triggering any marker animations
+            if (mapRef.current && mapRef.current.highlightMarker) {
+              mapRef.current.highlightMarker(productToSelect.id);
+            }
+          }, 300); // Shorter delay for closing dropdown
+        } catch (error) {
+          console.error("Error centering map:", error);
+          // Still close the dropdown even if there's an error
+          setShowResults(false);
         }
-      };
-
-      tryToCenter();
+      } else {
+        // If map ref is not available, still close the dropdown
+        setShowResults(false);
+      }
     } else {
       console.warn("Unable to center map - missing coordinates:", {
         lat: productToSelect.lat,
         lng: productToSelect.lng,
       });
+      // Close the dropdown even if coordinates are missing
+      setShowResults(false);
     }
   };
 
   const handleSearchClick = () => {
-    // Clear the search input
-    setSearchQuery("");
-    setContextSearchQuery("");
-
-    // Reset the selected product to show all markers
-    setSelectedProduct(null);
-
-    // Hide the search results
-    setShowResults(false);
+    if (showResults) {
+      // If results are shown, clicking will close them
+      setShowResults(false);
+    } else {
+      // If results are hidden, clear search and show results
+      setSearchQuery("");
+      setContextSearchQuery("");
+      setSelectedProduct(null);
+      setShowResults(true);
+    }
   };
+
+  // Add click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is outside search container and results are showing
+      const searchContainer = document.querySelector('.search-container');
+      if (searchContainer && !searchContainer.contains(event.target) && showResults) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showResults]);
+
+  // Add keyboard event listener for Escape key
+  useEffect(() => {
+    const handleEscapeKey = (event) => {
+      if (event.key === "Escape" && showResults) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showResults]);
 
   // Group products by country for the modal display
   const productsForModal = [...(regularProducts || []), ...(allProducts || [])];
@@ -270,11 +300,13 @@ const SearchBar = ({ mapRef }) => {
           flexDirection: "row",
           alignItems: "center",
           flexWrap: "nowrap",
+          margin: "0 auto",
         }}
       >
         <Grid
           xs={isMobile ? 10 : 10}
           container={false}
+          className="search-container"
           sx={{
             marginRight: isMobile ? "5px" : "10px",
             position: "relative",
@@ -287,7 +319,7 @@ const SearchBar = ({ mapRef }) => {
             fullWidth
             value={searchQuery}
             onChange={handleSearchChange}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             onClick={handleSearchClick}
             sx={{
               borderRadius: "25px",
@@ -352,162 +384,149 @@ const SearchBar = ({ mapRef }) => {
 
           {/* Search Results Dropdown */}
           {showResults && (
-            <Paper
-              elevation={3}
+            <Box
               sx={{
-                position: "static",
-                top: "2%",
+                position: "absolute",
+                top: "100%",
                 left: 0,
                 right: 0,
-                zIndex: 1002,
-                marginTop: "1px",
-                width: "100%",
-                borderRadius: isMobile ? "8px" : "12px",
-                overflow: "hidden",
-                boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)",
-                background: "rgba(255, 255, 255, 0.98)",
-                backdropFilter: "blur(10px)",
-                maxHeight: isMobile ? "calc(100vh - 200px)" : "400px",
-                overflowY: "auto",
-                WebkitOverflowScrolling: "touch",
-                touchAction: "pan-y",
-                position: "relative",
-                animation: "fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                "@keyframes fadeIn": {
-                  "0%": {
-                    opacity: 0,
-                    transform: isMobile ? "translateY(100%)" : "scale(0.95)",
-                  },
-                  "100%": {
-                    opacity: 1,
-                    transform: isMobile ? "translateY(0)" : "scale(1)",
-                  },
-                },
-                "&::-webkit-scrollbar": {
-                  width: isMobile ? "4px" : "8px",
-                },
-                "&::-webkit-scrollbar-track": {
-                  background: "#f5f5f5",
-                  borderRadius: isMobile ? "4px" : "8px",
-                  margin: isMobile ? "4px" : "8px",
-                },
-                "&::-webkit-scrollbar-thumb": {
-                  background: "#80CBC4",
-                  borderRadius: isMobile ? "4px" : "8px",
-                  border: "2px solid #f5f5f5",
-                  "&:hover": {
-                    background: "#4DB6AC",
-                  },
-                },
+                zIndex: 998,
+                mt: "5px",
               }}
             >
-              <Box p={isMobile ? 1 : 2}>
-                {isLoading ? (
-                  <Typography
-                    color="textSecondary"
-                    sx={{
-                      py: isMobile ? 1 : 2,
-                      textAlign: "center",
-                      fontSize: isMobile ? "14px" : "16px",
-                    }}
-                  >
-                    Searching...
-                  </Typography>
-                ) : filteredProducts.length > 0 ? (
-                  <List sx={{ py: 0 }}>
-                    {filteredProducts.slice(0, 5).map((product, index) => (
-                      <ListItem
-                        key={index}
-                        sx={{
-                          borderBottom:
-                            index < filteredProducts.length - 1
-                              ? "1px solid #f0f0f0"
-                              : "none",
-                          transition: "all 0.2s ease",
-                          cursor: "pointer",
-                          padding: isMobile ? "8px" : "16px",
-                          "&:hover": {
-                            backgroundColor: "#E0F2F1",
-                          },
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleProductSelect(product);
-                        }}
-                        button
-                      >
-                        <ListItemIcon>
-                          <Box
-                            component="img"
-                            src={
-                              product.image_url ||
-                              "/public/images/images(map).png"
-                            }
-                            alt={product.product_name}
-                            sx={{
-                              width: isMobile ? 32 : 40,
-                              height: isMobile ? 32 : 40,
-                              borderRadius: isMobile ? "6px" : "8px",
-                              objectFit: "cover",
-                            }}
-                          />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Typography
-                              variant={isMobile ? "body2" : "subtitle2"}
-                              sx={{
-                                color: "#00897B",
-                                fontWeight: 600,
-                                fontSize: isMobile ? "13px" : "inherit",
-                              }}
-                            >
-                              {product.product_name || product.name}
-                            </Typography>
-                          }
-                          secondary={
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: "#666",
-                                fontSize: isMobile ? "11px" : "12px",
-                              }}
-                            >
-                              {product.geo || "Location not specified"}
-                            </Typography>
-                          }
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography
-                    color="textSecondary"
-                    sx={{
-                      py: isMobile ? 1 : 2,
-                      textAlign: "center",
-                      fontSize: isMobile ? "13px" : "14px",
-                    }}
-                  >
-                    No products found. Try a different search.
-                    <br />
-                    <span
-                      style={{
-                        fontSize: isMobile ? "11px" : "12px",
-                        marginTop: isMobile ? "4px" : "8px",
-                        display: "block",
+              <Paper
+                elevation={3}
+                sx={{
+                  width: "100%",
+                  borderRadius: isMobile ? "8px" : "12px",
+                  overflow: "hidden",
+                  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)",
+                  background: "rgba(255, 255, 255, 0.98)",
+                  backdropFilter: "blur(10px)",
+                  maxHeight: isMobile ? "calc(100vh - 200px)" : "400px",
+                  overflowY: "auto",
+                  WebkitOverflowScrolling: "touch",
+                  animation: "fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  "@keyframes fadeIn": {
+                    "0%": {
+                      opacity: 0,
+                      transform: "translateY(-10px)",
+                    },
+                    "100%": {
+                      opacity: 1,
+                      transform: "translateY(0)",
+                    },
+                  },
+                }}
+              >
+                <Box p={isMobile ? 1 : 2}>
+                  {isLoading ? (
+                    <Typography
+                      color="textSecondary"
+                      sx={{
+                        py: isMobile ? 1 : 2,
+                        textAlign: "center",
+                        fontSize: isMobile ? "14px" : "16px",
                       }}
                     >
-                      For zehnder products, type a letter that appears after
-                      "zehnder-".
+                      Searching...
+                    </Typography>
+                  ) : filteredProducts.length > 0 ? (
+                    <List sx={{ py: 0 }}>
+                      {filteredProducts.slice(0, 5).map((product, index) => (
+                        <ListItem
+                          key={index}
+                          sx={{
+                            borderBottom:
+                              index < filteredProducts.length - 1
+                                ? "1px solid #f0f0f0"
+                                : "none",
+                            transition: "all 0.2s ease",
+                            cursor: "pointer",
+                            padding: isMobile ? "8px" : "16px",
+                            "&:hover": {
+                              backgroundColor: "#E0F2F1",
+                            },
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleProductSelect(product);
+                          }}
+                          button
+                        >
+                          <ListItemIcon>
+                            <Box
+                              component="img"
+                              src={
+                                product.image_url ||
+                                "/public/images/images(map).png"
+                              }
+                              alt={product.product_name}
+                              sx={{
+                                width: isMobile ? 32 : 40,
+                                height: isMobile ? 32 : 40,
+                                borderRadius: isMobile ? "6px" : "8px",
+                                objectFit: "cover",
+                              }}
+                            />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={
+                              <Typography
+                                variant={isMobile ? "body2" : "subtitle2"}
+                                sx={{
+                                  color: "#00897B",
+                                  fontWeight: 600,
+                                  fontSize: isMobile ? "13px" : "inherit",
+                                }}
+                              >
+                                {product.product_name || product.name}
+                              </Typography>
+                            }
+                            secondary={
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "#666",
+                                  fontSize: isMobile ? "11px" : "12px",
+                                }}
+                              >
+                                {product.geo || "Location not specified"}
+                              </Typography>
+                            }
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography
+                      color="textSecondary"
+                      sx={{
+                        py: isMobile ? 1 : 2,
+                        textAlign: "center",
+                        fontSize: isMobile ? "13px" : "14px",
+                      }}
+                    >
+                      No products found. Try a different search.
                       <br />
-                      Example: &quot;l&quot; will find &quot;zehnder-luna&quot;
-                    </span>
-                  </Typography>
-                )}
-              </Box>
-            </Paper>
+                      <span
+                        style={{
+                          fontSize: isMobile ? "11px" : "12px",
+                          marginTop: isMobile ? "4px" : "8px",
+                          display: "block",
+                        }}
+                      >
+                        For zehnder products, type a letter that appears after
+                        "zehnder-".
+                        <br />
+                        Example: &quot;l&quot; will find &quot;zehnder-luna&quot;
+                      </span>
+                    </Typography>
+                  )}
+                </Box>
+              </Paper>
+            </Box>
           )}
         </Grid>
 
@@ -516,11 +535,13 @@ const SearchBar = ({ mapRef }) => {
           xs={isMobile ? 2 : 2}
           sx={{
             display: "flex",
-            alignItems: "center",
+            alignItems: "flex-start",
             justifyContent: "center",
             paddingRight: isMobile ? "5px" : 0,
             paddingLeft: isMobile ? "0px" : "5px",
-            height: "100%",
+            height: "45px",
+            position: "relative",
+            zIndex: 999,
           }}
         >
           <Fab
